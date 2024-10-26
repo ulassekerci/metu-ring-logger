@@ -1,5 +1,5 @@
 {
-  "name": "ring-tracker",
+  "name": "ring-logger",
   "scripts": {
     "dev": "tsx watch src/index.ts"
   },
