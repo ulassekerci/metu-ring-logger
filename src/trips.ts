@@ -47,9 +47,10 @@ const getRingData = async () => {
 const findClosestStartTime = (tripStart: DateTime) => {
   const closest20thMinute = Math.round(tripStart.minute / 20) * 20
   const closest30thMinute = Math.round(tripStart.minute / 30) * 30
-  const isWeekendOrNight = tripStart.isWeekend || tripStart.hour < 6 || (tripStart.hour >= 20 && tripStart.minute >= 30)
+  const isWeekend = tripStart.isWeekend
+  const isNight = tripStart.hour < 6 || tripStart.hour > 20 || (tripStart.hour === 20 && tripStart.minute > 5)
   return tripStart.set({
-    minute: isWeekendOrNight ? closest30thMinute : closest20thMinute,
+    minute: isWeekend || isNight ? closest30thMinute : closest20thMinute,
     second: 0,
   })
 }
