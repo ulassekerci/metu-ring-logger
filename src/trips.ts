@@ -44,11 +44,12 @@ const getRingData = async () => {
   return ringTrips
 }
 
-const findClosestStartTime = (tripTime: DateTime) => {
-  const closest20thMinute = Math.round(tripTime.minute / 20) * 20
-  const isWeekendOrNight = tripTime.hour >= 17 || tripTime.isWeekend
-  return tripTime.set({
-    minute: isWeekendOrNight ? 30 : closest20thMinute,
+const findClosestStartTime = (tripStart: DateTime) => {
+  const closest20thMinute = Math.round(tripStart.minute / 20) * 20
+  const closest30thMinute = Math.round(tripStart.minute / 30) * 30
+  const isWeekendOrNight = tripStart.isWeekend || tripStart.hour < 6 || (tripStart.hour >= 20 && tripStart.minute >= 30)
+  return tripStart.set({
+    minute: isWeekendOrNight ? closest30thMinute : closest20thMinute,
     second: 0,
   })
 }
