@@ -2,7 +2,7 @@ export interface RingData {
   lat: string // latitude
   lng: string // longitude
   addr: string // address
-  dir: number // direction
+  dir: number // direction (0-8, one per 45 degrees)
   sp: string // speed
   clr: string // color
   ago: number // data age
