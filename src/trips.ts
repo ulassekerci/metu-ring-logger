@@ -31,13 +31,7 @@ const getRingData = async () => {
       departure: ringTime.toFormat('HH:mm'),
       duration: tripDuration,
       plate: tripLogs[0].plate,
-      points: tripLogs.length,
-      // points: tripLogs.map((log) => ({
-      //   timestamp: DateTime.fromJSDate(new Date(log.timestamp)).toFormat('dd/MM/yyyy HH:mm:ss'),
-      //   address: log.address,
-      //   color: log.color,
-      //   state: log.state,
-      // })),
+      points: tripLogs,
     }
   })
 
