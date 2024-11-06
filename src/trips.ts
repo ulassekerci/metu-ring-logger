@@ -3,6 +3,7 @@ import { RingLog } from './interfaces'
 import { DateTime } from 'luxon'
 import sql from './db'
 import { PostgresError } from 'postgres'
+import { lastCrawl } from './crawler'
 
 const app = new Hono()
 
@@ -60,6 +61,7 @@ const formatRingData = (ringData: RingLog[]) => {
       duration: tripDuration,
       plate: tripLogs[0].plate,
       points: tripLogs,
+      live: lastCrawl.data?.find((v) => v.id === tripID),
     }
   })
 }
