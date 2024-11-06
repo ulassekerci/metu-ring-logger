@@ -2,25 +2,53 @@ import { Hono } from 'hono'
 import { RingLog } from './interfaces'
 import { DateTime } from 'luxon'
 import sql from './db'
+import { PostgresError } from 'postgres'
 
 const app = new Hono()
 
 app.get('/', async (c) => {
-  const ringTrips = await getRingData()
+  const ringData = await getRingData()
+  const ringTrips = formatRingData(ringData)
   return c.json(ringTrips)
 })
 
 app.get('/times', async (c) => {
-  const ringTrips = await getRingData()
+  const ringData = await getRingData()
+  const ringTrips = formatRingData(ringData)
   const ringTimes = listRingTimes(ringTrips)
   return c.json(ringTimes)
 })
 
-const getRingData = async () => {
-  const ringData = (await sql`SELECT * FROM ring_history ORDER BY timestamp DESC`) as RingLog[]
+app.get('/:tripID', async (c) => {
+  const ringData = await getRingData(c.req.param('tripID'))
+  const ringTrip = formatRingData(ringData)
+  if (!ringTrip.length) return c.json({ error: 'Trip not found' }, 404)
+  return c.json(ringTrip[0])
+})
+
+app.delete('/:tripID', async (c) => {
+  const tripID = c.req.param('tripID')
+  try {
+    await sql`DELETE FROM ring_history WHERE trip_id = ${tripID}`
+    return c.json({ success: true }, 200)
+  } catch (error) {
+    const message = error instanceof PostgresError ? error.message : 'Unknown error'
+    return c.json({ success: false, error: message }, 500)
+  }
+})
+
+const getRingData = async (tripID?: string) => {
+  if (tripID) {
+    return (await sql`SELECT * FROM ring_history WHERE trip_id = ${tripID} ORDER BY timestamp DESC`) as RingLog[]
+  } else {
+    return (await sql`SELECT * FROM ring_history ORDER BY timestamp DESC`) as RingLog[]
+  }
+}
+
+const formatRingData = (ringData: RingLog[]) => {
   const ringTripIDs = [...new Set(ringData.map((log) => log.trip_id))]
 
-  const ringTrips = ringTripIDs.map((tripID) => {
+  return ringTripIDs.map((tripID) => {
     const tripLogs = ringData.filter((log) => log.trip_id === tripID)
     const tripStart = DateTime.fromJSDate(new Date(tripLogs[tripLogs.length - 1].timestamp))
     const tripEnd = DateTime.fromJSDate(new Date(tripLogs[0].timestamp))
@@ -28,14 +56,12 @@ const getRingData = async () => {
     const ringTime = findClosestStartTime(tripStart)
     return {
       tripID,
-      departure: ringTime.toFormat('HH:mm'),
+      departure: ringTime.toFormat('HH.mm'),
       duration: tripDuration,
       plate: tripLogs[0].plate,
       points: tripLogs,
     }
   })
-
-  return ringTrips
 }
 
 const findClosestStartTime = (tripStart: DateTime) => {
