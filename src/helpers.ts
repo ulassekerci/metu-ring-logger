@@ -16,16 +16,17 @@ export const shouldCrawl = () => {
   if (!lastCrawl.timestamp) return true
 
   // If it is night, do not crawl
-  if (now.hour > 1 && now.hour < 7) return false
+  if (now.hour >= 2 && now.hour < 8) return false
 
   // TEMPORARY: If it is weekend, do not crawl
   if (now.isWeekend) return false
 
   // If it is weekend or evening, crawl less frequently
-  if (now.isWeekend || now.hour > 18) {
+  if (now.isWeekend || now.hour > 20) {
     const lastCrawlDiff = lastCrawl.timestamp.diffNow('seconds').seconds
-    if (now.minute < 20) return lastCrawlDiff > 60
-    else if (now.minute > 40) return lastCrawlDiff > 60
+    if (now.minute < 5 || now.minute > 50) return true
+    else if (now.minute > 20 && now.minute < 35) return true
+    else return lastCrawlDiff > 60
   }
 
   return true
