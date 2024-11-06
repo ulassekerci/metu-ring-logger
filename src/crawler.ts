@@ -3,7 +3,7 @@ import { RingData, VehicleTrip } from './interfaces'
 import sql from './db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'
-import { checkMovement } from './helpers'
+import { checkMovement, detectNewTrip } from './helpers'
 
 export const lastCrawl = {
   data: null as RingData[] | null,
@@ -29,10 +29,9 @@ export const crawl = async () => {
     // Record to database
     ringData.map(async (ring) => {
       const lastVehicle = lastCrawl.vehicles.find((v) => v.plate === ring.id)
-      const isNewYellowTrip = lastVehicle?.color === '#ff0000' && ring.clr === '#ffff57'
-      const isNewBrownTrip = ring.id === ' - ODTU A1 Kapisi - brown'
-      const tripID = isNewYellowTrip || isNewBrownTrip ? nanoid() : lastVehicle?.tripID || nanoid()
-      const vehicle = { tripID, plate: ring.id, color: ring.clr }
+      const isNewTrip = detectNewTrip(ring, lastVehicle)
+      const tripID = isNewTrip ? nanoid() : lastVehicle?.tripID || nanoid()
+      const vehicle = { tripID, plate: ring.id, color: ring.clr, state: ring.key }
       if (!lastVehicle) lastCrawl.vehicles.push(vehicle)
       else lastCrawl.vehicles[lastCrawl.vehicles.indexOf(lastVehicle)] = vehicle
 

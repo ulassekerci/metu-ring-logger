@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { lastCrawl } from './crawler'
-import { RingData } from './interfaces'
+import { RingData, VehicleTrip } from './interfaces'
 import 'dotenv/config'
 
 export const shouldCrawl = () => {
@@ -39,4 +39,14 @@ export const checkMovement = (data: RingData[]) => {
     if (ring.lng !== oldData?.lng) isMoved = true
   })
   return isMoved
+}
+
+export const detectNewTrip = (newData: RingData, lastData?: VehicleTrip) => {
+  const redColor = '#ff0000'
+  const yellowColor = '#ffff57'
+  const brownState = ' - ODTU A1 Kapisi - brown'
+  if (!lastData) return true
+  if (lastData.color === redColor && newData.clr === yellowColor) return true
+  if (lastData.state !== brownState && newData.key === brownState) return true
+  return false
 }

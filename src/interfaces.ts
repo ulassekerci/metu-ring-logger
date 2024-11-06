@@ -6,7 +6,7 @@ export interface RingData {
   sp: string // speed
   clr: string // color
   ago: number // data age
-  key: string // name
+  key: string // state
   id: string // license plate
 }
 
@@ -14,6 +14,7 @@ export interface VehicleTrip {
   tripID: string
   plate: string
   color: string
+  state: string
 }
 
 export interface RingLog {
