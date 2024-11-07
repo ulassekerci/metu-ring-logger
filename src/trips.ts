@@ -61,7 +61,6 @@ const formatRingData = (ringData: RingLog[]) => {
       duration: tripDuration,
       plate: tripLogs[0].plate,
       points: tripLogs,
-      live: lastCrawl.data?.find((v) => v.id === tripID),
     }
   })
 }
