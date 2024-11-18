@@ -16,7 +16,7 @@ app.get('/', async (c) => {
 app.get('/times', async (c) => {
   const ringData = await getRingData()
   const ringTrips = formatRingData(ringData)
-  const ringTimes = listRingTimes(ringTrips)
+  const ringTimes = countRingTimes(ringTrips)
   return c.json(ringTimes)
 })
 
@@ -48,21 +48,23 @@ const getRingData = async (tripID?: string) => {
 
 const formatRingData = (ringData: RingLog[]) => {
   const ringTripIDs = [...new Set(ringData.map((log) => log.trip_id))]
-
-  return ringTripIDs.map((tripID) => {
-    const tripLogs = ringData.filter((log) => log.trip_id === tripID)
-    const tripStart = DateTime.fromJSDate(new Date(tripLogs[tripLogs.length - 1].timestamp))
-    const tripEnd = DateTime.fromJSDate(new Date(tripLogs[0].timestamp))
-    const tripDuration = tripEnd.diff(tripStart, 'seconds').seconds
-    const ringTime = findClosestStartTime(tripStart)
-    return {
-      tripID,
-      departure: ringTime.toFormat('HH.mm'),
-      duration: tripDuration,
-      plate: tripLogs[0].plate,
-      points: tripLogs,
-    }
-  })
+  return ringTripIDs
+    .map((tripID) => {
+      const tripLogs = ringData.filter((log) => log.trip_id === tripID)
+      const tripStart = DateTime.fromJSDate(new Date(tripLogs[tripLogs.length - 1].timestamp))
+      const tripEnd = DateTime.fromJSDate(new Date(tripLogs[0].timestamp))
+      const tripDuration = tripEnd.diff(tripStart, 'seconds').seconds
+      const ringTime = findClosestStartTime(tripStart)
+      return {
+        tripID,
+        departure: ringTime.toFormat('HH.mm'),
+        duration: tripDuration,
+        plate: tripLogs[0].plate,
+        points: tripLogs,
+        day: tripStart.weekday,
+      }
+    })
+    .filter((trip) => !lastCrawl.vehicles.some((vehicle) => vehicle.plate === trip.plate))
 }
 
 const findClosestStartTime = (tripStart: DateTime) => {
@@ -76,12 +78,14 @@ const findClosestStartTime = (tripStart: DateTime) => {
   })
 }
 
-const listRingTimes = (ringTrips: { departure: string }[]) => {
-  const ringTimes: { time: string; trips: number }[] = []
+const countRingTimes = (ringTrips: { departure: string; day: number }[]) => {
+  const ringTimes: { time: string; trips: number; days: string }[] = []
   ringTrips.map((trip) => {
     const existingTime = ringTimes.find((time) => time.time === trip.departure)
-    if (existingTime) existingTime.trips += 1
-    else ringTimes.push({ time: trip.departure, trips: 1 })
+    if (existingTime) {
+      existingTime.trips += 1
+      existingTime.days += ', ' + trip.day
+    } else ringTimes.push({ time: trip.departure, trips: 1, days: String(trip.day) })
   })
   return ringTimes.sort((a, b) => a.time.localeCompare(b.time))
 }
