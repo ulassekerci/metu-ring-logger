@@ -53,7 +53,7 @@ export const crawl = async () => {
     lastCrawl.vehicles = lastCrawl.vehicles.filter((old) => ringData.some((newR) => newR.id === old.plate))
     lastCrawl.timestamp = DateTime.now().setZone('Europe/Istanbul')
   } catch (error) {
-    if (error instanceof AxiosError) console.log('Crawling error from axios: ', error.response?.status)
+    if (error instanceof AxiosError) console.log('Crawling error from axios: ', error.message)
     else console.error(error)
   }
 }
