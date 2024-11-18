@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
-import { RingLog } from './interfaces'
+import { RingLog } from '../interfaces'
 import { DateTime } from 'luxon'
-import sql from './db'
+import sql from '../util/db'
 import { PostgresError } from 'postgres'
-import { lastCrawl } from './crawler'
+import { lastCrawl } from '../crawler'
 
 const app = new Hono()
 

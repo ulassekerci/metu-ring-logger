@@ -1,9 +1,9 @@
 import axios, { AxiosError } from 'axios'
 import { RingData, VehicleTrip } from './interfaces'
-import sql from './db'
+import sql from './util/db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'
-import { checkMovement, detectNewTrip } from './helpers'
+import { checkMovement, detectNewTrip } from './util/helpers'
 
 export const lastCrawl = {
   data: null as RingData[] | null,

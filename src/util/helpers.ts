@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
-import { lastCrawl } from './crawler'
-import { RingData, VehicleTrip } from './interfaces'
+import { lastCrawl } from '../crawler'
+import { RingData, VehicleTrip } from '../interfaces'
 import 'dotenv/config'
 
 export const shouldCrawl = () => {

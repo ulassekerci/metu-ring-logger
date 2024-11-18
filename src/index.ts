@@ -1,10 +1,10 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { crawl, lastCrawl } from './crawler'
-import { shouldCrawl } from './helpers'
+import { shouldCrawl } from './util/helpers'
 import { cors } from 'hono/cors'
-import trips from './trips'
-import stops from './stops'
+import trips from './routes/trips'
+import stops from './routes/stops'
 
 const app = new Hono()
 app.use(cors())
