@@ -38,7 +38,7 @@ app.delete('/:tripID', async (c) => {
   }
 })
 
-const getRingData = async (tripID?: string) => {
+export const getRingData = async (tripID?: string) => {
   if (tripID) {
     return (await sql`SELECT * FROM ring_history WHERE trip_id = ${tripID} ORDER BY timestamp DESC`) as RingLog[]
   } else {
@@ -46,7 +46,7 @@ const getRingData = async (tripID?: string) => {
   }
 }
 
-const formatRingData = (ringData: RingLog[]) => {
+export const formatRingData = (ringData: RingLog[]) => {
   const ringTripIDs = [...new Set(ringData.map((log) => log.trip_id))]
   return ringTripIDs
     .map((tripID) => {
@@ -54,7 +54,7 @@ const formatRingData = (ringData: RingLog[]) => {
       const tripStart = DateTime.fromJSDate(new Date(tripLogs[tripLogs.length - 1].timestamp))
       const tripEnd = DateTime.fromJSDate(new Date(tripLogs[0].timestamp))
       const tripDuration = tripEnd.diff(tripStart, 'seconds').seconds
-      const ringTime = findClosestStartTime(tripStart)
+      const ringTime = findClosestStartTime(tripStart, tripLogs[0].color)
       return {
         tripID,
         departure: ringTime.toFormat('HH.mm'),
@@ -67,15 +67,30 @@ const formatRingData = (ringData: RingLog[]) => {
     .filter((trip) => !lastCrawl.vehicles.some((vehicle) => vehicle.plate === trip.plate))
 }
 
-const findClosestStartTime = (tripStart: DateTime) => {
-  const closest20thMinute = Math.round(tripStart.minute / 20) * 20
-  const closest30thMinute = Math.round(tripStart.minute / 30) * 30
-  const isWeekend = tripStart.isWeekend
-  const isNight = tripStart.hour < 6 || tripStart.hour > 20 || (tripStart.hour === 20 && tripStart.minute > 5)
-  return tripStart.set({
-    minute: isWeekend || isNight ? closest30thMinute : closest20thMinute,
-    second: 0,
-  })
+const findClosestStartTime = (tripStart: DateTime, ringColor: string) => {
+  const closestNthMinute = (n: number) => Math.round(tripStart.minute / n) * n
+  const isYellowRed = ringColor === '#ffff57' || ringColor === '#ff0000'
+  const isPurple = ringColor === '#9600CD'
+  const isBrown = ringColor === '#A64D00'
+  const isGray = ringColor === '#808080' // Not sure about this one
+  const departureTimeObject = { minute: 0, second: 0 }
+
+  if (isYellowRed || isBrown) {
+    departureTimeObject.minute = closestNthMinute(20)
+  } else if (isPurple) {
+    const purpleTimes = [10, 30, 50] // Purple ring departs every 40 minutes starting at 20.30
+    // Find the closest departure time to the trip start minutes
+    // It'd be better to check the hour as well
+    const closestTime = purpleTimes.reduce((prev, curr) =>
+      Math.abs(curr - tripStart.minute) < Math.abs(prev - tripStart.minute) ? curr : prev
+    )
+    departureTimeObject.minute = closestTime
+  } else {
+    // To be used for gray ring
+    departureTimeObject.minute = closestNthMinute(30)
+  }
+
+  return tripStart.set(departureTimeObject)
 }
 
 const countRingTimes = (ringTrips: { departure: string; day: number }[]) => {
