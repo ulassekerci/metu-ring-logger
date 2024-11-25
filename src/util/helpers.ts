@@ -21,25 +21,16 @@ export const shouldCrawl = () => {
   // TEMPORARY: If it is weekend, do not crawl
   if (now.isWeekend) return false
 
-  // If it is weekend or evening, crawl less frequently
-  if (now.isWeekend || now.hour > 20) {
-    const lastCrawlDiff = lastCrawl.timestamp.diffNow('seconds').seconds
-    if (now.minute < 5 || now.minute > 50) return true
-    else if (now.minute > 20 && now.minute < 35) return true
-    else return lastCrawlDiff > 60
-  }
-
   return true
 }
 
 export const checkMovement = (data: RingData[]) => {
-  let isMoved = false
-  data.map((ring) => {
+  for (const ring of data) {
     const oldData = lastCrawl.data?.find((v) => v.id === ring.id)
-    if (ring.lat !== oldData?.lat) isMoved = true
-    if (ring.lng !== oldData?.lng) isMoved = true
-  })
-  return isMoved
+    if (!oldData) return true
+    if (ring.lat !== oldData.lat || ring.lng !== oldData.lng) return true
+  }
+  return false
 }
 
 export const detectNewTrip = (newData: RingData, lastData?: VehicleTrip) => {
