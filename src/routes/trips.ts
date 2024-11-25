@@ -93,7 +93,7 @@ const findClosestStartTime = (tripStart: DateTime, ringColor: string) => {
   return tripStart.set(departureTimeObject)
 }
 
-const countRingTimes = (ringTrips: { departure: string; day: number }[]) => {
+export const countRingTimes = (ringTrips: { departure: string; day: number }[]) => {
   const ringTimes: { time: string; trips: number; days: string }[] = []
   ringTrips.map((trip) => {
     const existingTime = ringTimes.find((time) => time.time === trip.departure)

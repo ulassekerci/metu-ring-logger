@@ -28,3 +28,21 @@ export interface RingLog {
   plate: string
   timestamp: string
 }
+
+export interface FormattedTrip {
+  tripID: string
+  departure: string
+  duration: number
+  plate: string
+  points: RingLog[]
+  day: number
+}
+
+export interface AvgTripPoint {
+  lat: string
+  lng: string
+  address: string
+  color: string
+  departure: string
+  time: string
+}
