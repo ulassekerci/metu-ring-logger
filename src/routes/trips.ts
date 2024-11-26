@@ -46,7 +46,7 @@ export const getRingData = async (tripID?: string) => {
   }
 }
 
-export const formatRingData = (ringData: RingLog[]) => {
+export const formatRingData = (ringData: RingLog[], filterLive?: boolean) => {
   const ringTripIDs = [...new Set(ringData.map((log) => log.trip_id))]
   return ringTripIDs
     .map((tripID) => {
@@ -62,9 +62,11 @@ export const formatRingData = (ringData: RingLog[]) => {
         plate: tripLogs[0].plate,
         points: tripLogs,
         day: tripStart.weekday,
+        live: filterLive ? tripEnd.diffNow('minutes').minutes > -3 : undefined,
       }
     })
     .filter((trip) => !lastCrawl.vehicles.some((vehicle) => vehicle.plate === trip.plate))
+    .filter((trip) => (filterLive ? !trip.live : true))
 }
 
 const findClosestStartTime = (tripStart: DateTime, ringColor: string) => {

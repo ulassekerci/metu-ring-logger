@@ -7,7 +7,22 @@ import sql from '../util/db'
 const app = new Hono()
 
 app.get('/', async (c) => {
-  return c.json({ message: 'Departure not specified' }, 400)
+  const now = DateTime.now()
+  const fiveMinutesAgo = now.minus({ minutes: 5 })
+  const fiveMinutesLater = now.plus({ minutes: 5 })
+  const departures = await sql`
+    SELECT DISTINCT departure FROM ring_avg
+    WHERE time > ${fiveMinutesAgo.toFormat('HH:mm:ss')}
+    AND time < ${fiveMinutesLater.toFormat('HH:mm:ss')}`
+
+  if (departures.length === 0) return c.json({ error: 'No data available' }, 404)
+
+  const averageTrips = await sql`
+    SELECT * FROM ring_avg
+    WHERE departure in ${sql(departures.map((row) => row.departure))}
+    ORDER BY time ASC`
+
+  return c.json(averageTrips)
 })
 
 app.get('/:departure', async (c) => {
@@ -21,7 +36,7 @@ app.get('/:departure', async (c) => {
 
 app.post('/', async (c) => {
   const ringData = await getRingData()
-  const ringTrips = formatRingData(ringData)
+  const ringTrips = formatRingData(ringData, true)
   const ringTimes = countRingTimes(ringTrips)
   const averageTrips: AvgTripPoint[] = []
   for (const departure of ringTimes) {
@@ -32,7 +47,7 @@ app.post('/', async (c) => {
         lat: point.lat,
         lng: point.lng,
         address: point.address,
-        time: DateTime.fromJSDate(new Date(point.timestamp)).toFormat('HH:mm'),
+        time: DateTime.fromJSDate(new Date(point.timestamp)).toFormat('HH:mm:ss'),
         departure: departure.time.replace('.', ':'),
       })
     })
