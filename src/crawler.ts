@@ -20,6 +20,7 @@ export const crawl = async () => {
     if (typeof ringData === 'string') {
       lastCrawl.data = null
       lastCrawl.vehicles = []
+      lastCrawl.timestamp = DateTime.now().setZone('Europe/Istanbul')
       return
     }
 

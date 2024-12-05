@@ -3,11 +3,11 @@ import { RingLog } from '../interfaces'
 import { DateTime } from 'luxon'
 import sql from '../util/db'
 import { PostgresError } from 'postgres'
-import { lastCrawl } from '../crawler'
 
 const app = new Hono()
 
 app.get('/', async (c) => {
+  // TODO: error handling
   const ringData = await getRingData()
   const ringTrips = formatRingData(ringData)
   return c.json(ringTrips)
@@ -28,9 +28,8 @@ app.get('/:tripID', async (c) => {
 })
 
 app.delete('/:tripID', async (c) => {
-  const tripID = c.req.param('tripID')
   try {
-    await sql`DELETE FROM ring_history WHERE trip_id = ${tripID}`
+    await sql`DELETE FROM ring_history WHERE trip_id = ${c.req.param('tripID')}`
     return c.json({ success: true }, 200)
   } catch (error) {
     const message = error instanceof PostgresError ? error.message : 'Unknown error'
@@ -65,7 +64,6 @@ export const formatRingData = (ringData: RingLog[], filterLive?: boolean) => {
         live: filterLive ? tripEnd.diffNow('minutes').minutes > -3 : undefined,
       }
     })
-    .filter((trip) => !lastCrawl.vehicles.some((vehicle) => vehicle.plate === trip.plate))
     .filter((trip) => (filterLive ? !trip.live : true))
 }
 
