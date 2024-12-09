@@ -36,11 +36,13 @@ export const checkMovement = (data: RingData[]) => {
 export const detectNewTrip = (newData: RingData, lastData?: VehicleTrip) => {
   const redColor = '#ff0000'
   const yellowColor = '#ffff57'
+  const yellowState = ' - ODTU A2 Kapisi - yellow'
   const brownState = ' - ODTU A1 Kapisi - brown'
   const purpleState = ' - ODTU A1 Kapisi - purple'
   if (!lastData) return true
   if (lastData.color === redColor && newData.clr === yellowColor) return true
   if (lastData.state !== brownState && newData.key === brownState) return true
+  if (lastData.state !== yellowState && newData.key === yellowState) return true
   if (lastData.state !== purpleState && newData.key === purpleState) return true
   return false
 }
