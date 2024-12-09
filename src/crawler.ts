@@ -46,7 +46,9 @@ export const crawl = async () => {
         plate: ring.id,
       }
 
-      await sql`INSERT INTO ring_history ${sql(databaseRow)}`
+      const isWeekend = DateTime.now().setZone('Europe/Istanbul').plus({ hours: 3 }).isWeekend
+      const dbTable = isWeekend ? 'ring_history_we' : 'ring_history'
+      await sql`INSERT INTO ${dbTable} ${sql(databaseRow)}`
     })
 
     // Update lastCrawl

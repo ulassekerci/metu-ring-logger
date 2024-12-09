@@ -18,9 +18,6 @@ export const shouldCrawl = () => {
   // If it is night, do not crawl
   if (now.hour >= 2 && now.hour < 8) return false
 
-  // TEMPORARY: If it is weekend, do not crawl
-  if (now.isWeekend) return false
-
   return true
 }
 
