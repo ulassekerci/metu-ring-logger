@@ -15,6 +15,7 @@ export interface VehicleTrip {
   plate: string
   color: string
   state: string
+  departure: string | null
 }
 
 export interface RingLog {

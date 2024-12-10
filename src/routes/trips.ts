@@ -67,7 +67,7 @@ export const formatRingData = (ringData: RingLog[], filterLive?: boolean) => {
     .filter((trip) => (filterLive ? !trip.live : true))
 }
 
-const findClosestStartTime = (tripStart: DateTime, ringColor: string) => {
+export const findClosestStartTime = (tripStart: DateTime, ringColor: string) => {
   const closestNthMinute = (n: number) => Math.round(tripStart.minute / n) * n
   const isYellowRed = ringColor === '#ffff57' || ringColor === '#ff0000'
   const isPurple = ringColor === '#9600CD'

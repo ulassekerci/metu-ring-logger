@@ -1,9 +1,10 @@
 import axios, { AxiosError } from 'axios'
-import { RingData, VehicleTrip } from './interfaces'
+import { RingData, RingLog, VehicleTrip } from './interfaces'
 import sql from './util/db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'
 import { checkMovement, detectNewTrip } from './util/helpers'
+import { findClosestStartTime } from './routes/trips'
 
 export const lastCrawl = {
   data: null as RingData[] | null,
@@ -16,6 +17,9 @@ export const crawl = async () => {
     const ringReq = await axios.get('https://ring.metu.edu.tr/ring.json')
     const ringData = ringReq.data as RingData[] | string
 
+    const isWeekend = DateTime.now().setZone('Europe/Istanbul').plus({ hours: 3 }).isWeekend
+    const dbTable = isWeekend ? 'ring_history_we' : 'ring_history'
+
     // If there is no data, return
     if (typeof ringData === 'string') {
       lastCrawl.data = null
@@ -27,12 +31,33 @@ export const crawl = async () => {
     // If there is no movement, return
     if (!checkMovement(ringData)) return
 
+    // Get last records from database
+    const lastTripData = (await sql`
+      SELECT * FROM ${sql(dbTable)}
+      WHERE timestamp > NOW() - INTERVAL '1 hour' 
+      ORDER BY "timestamp" ASC
+    `) as RingLog[]
+
+    const lastTripIDs = lastTripData.map((trip) => trip.trip_id)
+    const lastDepartures = lastTripIDs.map((id) => {
+      const lastTrip = lastTripData.filter((trip) => trip.trip_id === id)[0]
+      const lastTripStart = DateTime.fromJSDate(new Date(lastTrip.timestamp))
+      const ringTime = findClosestStartTime(lastTripStart, lastTrip.color)
+      return { ...lastTrip, timestamp: ringTime.toFormat('HH.mm') }
+    })
+
     // Record to database
     ringData.map(async (ring) => {
       const lastVehicle = lastCrawl.vehicles.find((v) => v.plate === ring.id)
       const isNewTrip = detectNewTrip(ring, lastVehicle)
       const tripID = isNewTrip ? nanoid() : lastVehicle?.tripID || nanoid()
-      const vehicle = { tripID, plate: ring.id, color: ring.clr, state: ring.key }
+      const vehicle = {
+        tripID,
+        plate: ring.id,
+        color: ring.clr,
+        state: ring.key,
+        departure: lastDepartures.find((d) => d.trip_id === tripID)?.timestamp || null,
+      }
       if (!lastVehicle) lastCrawl.vehicles.push(vehicle)
       else lastCrawl.vehicles[lastCrawl.vehicles.indexOf(lastVehicle)] = vehicle
 
@@ -46,8 +71,6 @@ export const crawl = async () => {
         plate: ring.id,
       }
 
-      const isWeekend = DateTime.now().setZone('Europe/Istanbul').plus({ hours: 3 }).isWeekend
-      const dbTable = isWeekend ? 'ring_history_we' : 'ring_history'
       await sql`INSERT INTO ${sql(dbTable)} ${sql(databaseRow)}`
     })
 
