@@ -40,10 +40,17 @@ export const crawl = async () => {
 
     const lastTripIDs = lastTripData.map((trip) => trip.trip_id)
     const lastDepartures = lastTripIDs.map((id) => {
-      const lastTrip = lastTripData.filter((trip) => trip.trip_id === id)[0]
-      const lastTripStart = DateTime.fromJSDate(new Date(lastTrip.timestamp))
-      const ringTime = findClosestStartTime(lastTripStart, lastTrip.color)
-      return { ...lastTrip, timestamp: ringTime.toFormat('HH.mm') }
+      const lastTripStartPoint = lastTripData.filter((trip) => trip.trip_id === id)[0]
+      const lastTripDeparture = DateTime.fromJSDate(new Date(lastTripStartPoint.timestamp))
+      const lastTripStartAddress = lastTripStartPoint.address
+      const isSuspicious = !(
+        lastTripStartAddress.includes('A1') ||
+        lastTripStartAddress.includes('A2') ||
+        lastTripStartAddress.includes('Garaj') ||
+        lastTripStartAddress.includes('BOTE-MYO')
+      )
+      const ringTime = findClosestStartTime(lastTripDeparture, lastTripStartPoint.color)
+      return { ...lastTripStartPoint, timestamp: isSuspicious ? null : ringTime.toFormat('HH.mm') }
     })
 
     // Record to database
