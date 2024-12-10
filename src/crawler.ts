@@ -50,7 +50,7 @@ export const crawl = async () => {
         lastTripStartAddress.includes('BOTE-MYO')
       )
       const ringTime = findClosestStartTime(lastTripDeparture, lastTripStartPoint.color)
-      return { ...lastTripStartPoint, timestamp: isSuspicious ? null : ringTime.toFormat('HH.mm') }
+      return { ...lastTripStartPoint, timestamp: isSuspicious ? null : ringTime.toFormat('HH:mm:ss') }
     })
 
     // Record to database
