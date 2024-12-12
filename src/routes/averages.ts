@@ -7,7 +7,7 @@ import sql from '../util/db'
 const app = new Hono()
 
 app.get('/', async (c) => {
-  const now = DateTime.now()
+  const now = DateTime.now().setZone('Europe/Istanbul')
   const fiveMinutesAgo = now.minus({ minutes: 5 })
   const fiveMinutesLater = now.plus({ minutes: 5 })
   const departures = await sql`

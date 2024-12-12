@@ -63,6 +63,7 @@ export const crawl = async () => {
         plate: ring.id,
         color: ring.clr,
         state: ring.key,
+        // TODO: this is not ideal - ghost will be shown if vehicle ends its trip
         departure: lastDepartures.find((d) => d.trip_id === tripID)?.timestamp || null,
       }
       if (!lastVehicle) lastCrawl.vehicles.push(vehicle)
