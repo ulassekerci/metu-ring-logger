@@ -7,7 +7,7 @@ import auth from './routes/auth'
 import trips from './routes/trips'
 import stops from './routes/stops'
 import averages from './routes/averages'
-import { parseEnv } from './util/env'
+import './util/env'
 
 const app = new Hono()
 app.use(cors())
@@ -22,5 +22,4 @@ setInterval(() => {
   if (shouldCrawl()) crawl()
 }, 1000)
 
-parseEnv()
 serve(app)

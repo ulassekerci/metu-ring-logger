@@ -13,20 +13,11 @@ declare global {
   }
 }
 
-export const parseEnv = () => {
-  try {
-    zodEnv.parse(process.env)
-  } catch (err) {
-    handleEnvError(err)
-  }
-}
-
-const handleEnvError = (err: unknown) => {
-  if (err instanceof z.ZodError) {
-    const { fieldErrors } = err.flatten()
-    const errorMessage = Object.entries(fieldErrors)
-      .map(([field, errors]) => (errors ? `${field}: ${errors.join(', ')}` : field))
-      .join('\n  ')
-    throw new Error(`Missing environment variables:\n  ${errorMessage}`)
-  }
+try {
+  zodEnv.parse(process.env)
+} catch (err) {
+  if (!(err instanceof z.ZodError)) throw err
+  const missing = err.errors.map((e) => e.path).join(', ')
+  console.error(`Missing environment variables: ${missing}`)
+  process.exit(1)
 }
