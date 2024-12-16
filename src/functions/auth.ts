@@ -1,5 +1,7 @@
+import { DateTime } from 'luxon'
 import sql from '../util/db'
 import * as argon2 from 'argon2'
+import { sign } from 'hono/jwt'
 
 export interface User {
   name: string
@@ -9,8 +11,19 @@ export interface User {
 
 export const authUser = async (email: string, password: string) => {
   const userData = (await sql`SELECT * FROM users WHERE email = ${email}`)[0] as User
-  if (!userData) return false
-  return await argon2.verify(userData.password, password)
+  if (!userData) throw new Error('User not found')
+  const isAuthed = await argon2.verify(userData.password, password)
+  if (!isAuthed) throw new Error('Invalid password')
+  return userData
+}
+
+export const signUser = async (user: User) => {
+  const payload = {
+    name: user.name,
+    email: user.email,
+    exp: DateTime.now().plus({ days: 1 }).toUnixInteger(),
+  }
+  return await sign(payload, process.env.JWT_SECRET)
 }
 
 export const createUser = async (user: User) => {
@@ -18,8 +31,7 @@ export const createUser = async (user: User) => {
   const insertedUser = await sql`
   INSERT INTO users (name, email, password) 
   VALUES (${user.name}, ${user.email}, ${hash})
-  RETURNING *
-  `
+  RETURNING *`
   return insertedUser[0] as User
 }
 
