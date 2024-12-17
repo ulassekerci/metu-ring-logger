@@ -1,10 +1,13 @@
 import { Hono } from 'hono'
-import { countRingTimes, formatRingData, getRingData } from './trips'
-import { AvgTripPoint, FormattedTrip } from '../interfaces'
+import { AvgTripPoint } from '../interfaces'
 import { DateTime } from 'luxon'
 import sql from '../util/db'
+import { countRingTimes, formatRingData, queryTrips } from '../functions/trips'
+import { findAverageTrip } from '../functions/average'
+import { jwt } from 'hono/jwt'
 
 const app = new Hono()
+app.use('/update', jwt({ secret: process.env.JWT_SECRET }))
 
 app.get('/', async (c) => {
   const now = DateTime.now().setZone('Europe/Istanbul')
@@ -25,17 +28,17 @@ app.get('/', async (c) => {
   return c.json(averageTrips)
 })
 
-app.get('/:departure', async (c) => {
-  const departure = c.req.param('departure')
-  const averageTrip = await sql`
-    SELECT * FROM ring_avg
-    WHERE departure = ${departure.replace('.', ':') + ':00'}
-    ORDER BY time ASC`
-  return c.json(averageTrip)
-})
+// app.get('/:departure', async (c) => {
+//   const departure = c.req.param('departure')
+//   const averageTrip = await sql`
+//     SELECT * FROM ring_avg
+//     WHERE departure = ${departure.replace('.', ':') + ':00'}
+//     ORDER BY time ASC`
+//   return c.json(averageTrip)
+// })
 
-app.post('/', async (c) => {
-  const ringData = await getRingData()
+app.post('/update', async (c) => {
+  const ringData = await queryTrips()
   const ringTrips = formatRingData(ringData, true)
   const ringTimes = countRingTimes(ringTrips)
   const averageTrips: AvgTripPoint[] = []
@@ -56,28 +59,5 @@ app.post('/', async (c) => {
   await sql`INSERT INTO ring_avg ${sql(averageTrips)}`
   return c.json({ message: 'Average trips saved' })
 })
-
-const findAverageTrip = (trips: FormattedTrip[], departure: string) => {
-  const departureTrips = trips
-    .filter((trip) => trip.departure === departure)
-    .map((trip) => {
-      const departureTime = DateTime.fromFormat(trip.departure, 'HH.mm')
-      const tripEndPoint = trip.points.filter(
-        (point) =>
-          point.address === 'ODTU A1 Kapisi' ||
-          point.address === 'ODTU A2 Kapisi' ||
-          point.address === 'Garajlar' ||
-          point.address === 'BOTE-MYO'
-      )
-      const tripEnd = DateTime.fromJSDate(new Date(tripEndPoint.reverse()[0].timestamp))
-      return { ...trip, durationFromDeparture: tripEnd.diff(departureTime, 'seconds').seconds }
-    })
-
-  const sortedTrips = departureTrips.sort((a, b) => a.durationFromDeparture - b.durationFromDeparture)
-  const medianIndex = Math.floor(sortedTrips.length / 2)
-  return sortedTrips[medianIndex]
-}
-
-app.post('/', async (c) => {})
 
 export default app
