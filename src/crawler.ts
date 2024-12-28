@@ -4,7 +4,7 @@ import sql from './util/db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'
 import { checkMovement, detectNewTrip } from './util/helpers'
-import { findClosestStartTime } from './routes/trips'
+import { findClosestStartTime } from './functions/trips'
 
 export const lastCrawl = {
   data: null as RingData[] | null,
@@ -17,7 +17,7 @@ export const crawl = async () => {
     const ringReq = await axios.get('https://ring.metu.edu.tr/ring.json')
     const ringData = ringReq.data as RingData[] | string
 
-    const isWeekend = DateTime.now().setZone('Europe/Istanbul').plus({ hours: 3 }).isWeekend
+    const isWeekend = DateTime.now().setZone('Europe/Istanbul').minus({ hours: 3 }).isWeekend
     const dbTable = isWeekend ? 'ring_history_we' : 'ring_history'
 
     // If there is no data, return
@@ -63,7 +63,6 @@ export const crawl = async () => {
         plate: ring.id,
         color: ring.clr,
         state: ring.key,
-        // TODO: this is not ideal - ghost will be shown if vehicle ends its trip
         departure: lastDepartures.find((d) => d.trip_id === tripID)?.timestamp || null,
       }
       if (!lastVehicle) lastCrawl.vehicles.push(vehicle)
