@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { AvgTripPoint } from '../interfaces'
 import { DateTime } from 'luxon'
 import sql from '../util/db'
-import { countRingTimes, formatRingData, queryTrips } from '../functions/trips'
+import { countRingTimes, formatRingData, queryAllTrips } from '../functions/trips'
 import { findAverageTrip } from '../functions/average'
 import { jwt } from 'hono/jwt'
 
@@ -18,7 +18,7 @@ app.get('/', async (c) => {
     WHERE time > ${fiveMinutesAgo.toFormat('HH:mm:ss')}
     AND time < ${fiveMinutesLater.toFormat('HH:mm:ss')}`
 
-  if (departures.length === 0) return c.json({ error: 'No data available' }, 404)
+  if (departures.length === 0) return c.json({ message: 'No data available' }, 404)
 
   const averageTrips = await sql`
     SELECT * FROM ring_avg
@@ -28,17 +28,8 @@ app.get('/', async (c) => {
   return c.json(averageTrips)
 })
 
-// app.get('/:departure', async (c) => {
-//   const departure = c.req.param('departure')
-//   const averageTrip = await sql`
-//     SELECT * FROM ring_avg
-//     WHERE departure = ${departure.replace('.', ':') + ':00'}
-//     ORDER BY time ASC`
-//   return c.json(averageTrip)
-// })
-
 app.post('/update', async (c) => {
-  const ringData = await queryTrips()
+  const ringData = await queryAllTrips()
   const ringTrips = formatRingData(ringData, true)
   const ringTimes = countRingTimes(ringTrips)
   const averageTrips: AvgTripPoint[] = []

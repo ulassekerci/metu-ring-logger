@@ -2,12 +2,31 @@ import { DateTime } from 'luxon'
 import { RingLog } from '../interfaces'
 import sql from '../util/db'
 
-export const queryTrips = async (tripID?: string) => {
-  if (tripID) {
-    return (await sql`SELECT * FROM ring_history WHERE trip_id = ${tripID} ORDER BY timestamp DESC`) as RingLog[]
-  } else {
-    return (await sql`SELECT * FROM ring_history ORDER BY timestamp DESC`) as RingLog[]
-  }
+export const queryTrip = async (tripID: string) => {
+  return (await sql`
+    SELECT * FROM ring_history
+    WHERE trip_id = ${tripID}
+    ORDER BY timestamp DESC
+  `) as RingLog[]
+}
+
+export const queryTrips = async ({ start, end }: { start: DateTime; end: DateTime }) => {
+  // Set the start and end times to 3 AM to remove previous day's trips
+  const startWithTime = start.set({ hour: 3 })
+  const endWithTime = end.set({ hour: 3 })
+  return (await sql`
+    SELECT * FROM ring_history
+    WHERE timestamp >= ${startWithTime.toJSDate()}
+    AND timestamp <= ${endWithTime.toJSDate()}
+    ORDER BY timestamp DESC
+  `) as RingLog[]
+}
+
+export const queryAllTrips = async () => {
+  return (await sql`
+    SELECT * FROM ring_history
+    ORDER BY timestamp DESC
+  `) as RingLog[]
 }
 
 export const formatRingData = (ringData: RingLog[], filterLive?: boolean) => {
@@ -37,7 +56,7 @@ export const findClosestStartTime = (tripStart: DateTime, ringColor: string) => 
   const isYellowRed = ringColor === '#ffff57' || ringColor === '#ff0000'
   const isPurple = ringColor === '#9600CD'
   const isBrown = ringColor === '#A64D00'
-  const isGray = ringColor === '#808080' // Not sure about this one
+  const isGray = ringColor === '#737373'
   const departureTimeObject = { minute: 0, second: 0 }
 
   if (isYellowRed || isBrown) {
