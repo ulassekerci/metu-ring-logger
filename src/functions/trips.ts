@@ -11,9 +11,10 @@ export const queryTrip = async (tripID: string) => {
 }
 
 export const queryTrips = async ({ start, end }: { start: DateTime; end: DateTime }) => {
-  // Set the start and end times to 3 AM to remove previous day's trips
+  // Set the start to 3 AM to remove previous day's trips
+  // and end to 3 AM of the next day to include all trips of the end day
   const startWithTime = start.set({ hour: 3 })
-  const endWithTime = end.set({ hour: 3 })
+  const endWithTime = end.plus({ days: 1 }).set({ hour: 3 })
   return (await sql`
     SELECT * FROM ring_history
     WHERE timestamp >= ${startWithTime.toJSDate()}
