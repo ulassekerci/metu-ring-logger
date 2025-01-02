@@ -12,12 +12,14 @@
     "hono": "^4.6.5",
     "luxon": "^3.5.0",
     "nanoid": "^5.0.9",
+    "outliers": "^0.0.3",
     "postgres": "^3.4.4",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.11.17",
+    "@types/outliers": "^0.0.2",
     "tsx": "^4.7.1"
   }
 }
