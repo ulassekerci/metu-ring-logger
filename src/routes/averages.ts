@@ -34,7 +34,8 @@ app.post('/update', async (c) => {
   const ringTimes = countRingTimes(ringTrips)
   const averageTrips: AvgTripPoint[] = []
   for (const departure of ringTimes) {
-    const averageTrip = findAverageTrip(ringTrips, departure.time)
+    const tripsDepartedAt = ringTrips.filter((trip) => trip.departure === departure.time)
+    const averageTrip = findAverageTrip(tripsDepartedAt)
     averageTrip.points.forEach((point) => {
       averageTrips.push({
         color: point.color,

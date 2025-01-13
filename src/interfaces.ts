@@ -37,6 +37,7 @@ export interface FormattedTrip {
   plate: string
   points: RingLog[]
   day: number
+  live: boolean | undefined
 }
 
 export interface AvgTripPoint {
@@ -46,4 +47,11 @@ export interface AvgTripPoint {
   color: string
   departure: string
   time: string
+}
+
+export interface Stop {
+  name: string
+  lat: number
+  lng: number
+  address: string | null
 }

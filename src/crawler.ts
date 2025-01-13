@@ -4,7 +4,7 @@ import sql from './util/db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'
 import { checkMovement, detectNewTrip } from './util/helpers'
-import { findClosestStartTime } from './functions/trips'
+import { calculateDeparture } from './functions/trips'
 
 export const lastCrawl = {
   data: null as RingData[] | null,
@@ -49,7 +49,7 @@ export const crawl = async () => {
         lastTripStartAddress.includes('Garaj') ||
         lastTripStartAddress.includes('BOTE-MYO')
       )
-      const ringTime = findClosestStartTime(lastTripDeparture, lastTripStartPoint.color)
+      const ringTime = calculateDeparture(lastTripDeparture, lastTripStartPoint.color)
       return { ...lastTripStartPoint, timestamp: isSuspicious ? null : ringTime.toFormat('HH:mm:ss') }
     })
 
