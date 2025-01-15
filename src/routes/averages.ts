@@ -5,27 +5,27 @@ import sql from '../util/db'
 import { countRingTimes, formatRingData, queryAllTrips } from '../functions/trips'
 import { findAverageTrip } from '../functions/average'
 import { jwt } from 'hono/jwt'
+import {
+  getGhostLocations,
+  getRelevantAverageTrips,
+  getRelevantDepartureTimes,
+  ghostLocationsCache,
+} from '../functions/ghost'
+import { lastCrawl } from '../crawler'
 
 const app = new Hono()
 app.use('/update', jwt({ secret: process.env.JWT_SECRET }))
 
 app.get('/', async (c) => {
-  const now = DateTime.now().setZone('Europe/Istanbul')
-  const fiveMinutesAgo = now.minus({ minutes: 5 })
-  const fiveMinutesLater = now.plus({ minutes: 5 })
-  const departures = await sql`
-    SELECT DISTINCT departure FROM ring_avg
-    WHERE time > ${fiveMinutesAgo.toFormat('HH:mm:ss')}
-    AND time < ${fiveMinutesLater.toFormat('HH:mm:ss')}`
-
-  if (departures.length === 0) return c.json({ message: 'No data available' }, 404)
-
-  const averageTrips = await sql`
-    SELECT * FROM ring_avg
-    WHERE departure in ${sql(departures.map((row) => row.departure))}
-    ORDER BY time ASC`
-
-  return c.json(averageTrips)
+  // Check the cache first
+  const cache = ghostLocationsCache
+  if (cache.timestamp >= lastCrawl.timestamp) return c.json(cache.data)
+  // If the cache is outdated, query and calculate the ghost points
+  const departures = await getRelevantDepartureTimes()
+  if (departures.length === 0) return c.json({ message: 'No trips were recorded at this time' }, 404)
+  const averageTrips = await getRelevantAverageTrips(departures)
+  const ghostPoints = await getGhostLocations(averageTrips)
+  return c.json(ghostPoints)
 })
 
 app.post('/update', async (c) => {

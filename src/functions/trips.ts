@@ -11,8 +11,8 @@ export const queryTrip = async (tripID: string) => {
 }
 
 export const queryTrips = async ({ start, end }: { start: DateTime; end: DateTime }) => {
-  // Set the start to 3 AM to remove previous day's trips
-  // and end to 3 AM of the next day to include all trips of the end day
+  // Start time is 3 AM to remove previous day's trips
+  // End time is 3 AM of the next day to include all trips of the end day
   const startWithTime = start.set({ hour: 3 })
   const endWithTime = end.plus({ days: 1 }).set({ hour: 3 })
   return (await sql`
@@ -60,6 +60,7 @@ export const calculateDeparture = (tripStart: DateTime, ringColor: string) => {
   const isGray = ringColor === '#737373'
   const departureTimeObject = { minute: 0, second: 0 }
   // TODO: yellow-red last 2 trips are not at 20th minute (17.05 and 17.35) - put a check for that
+  // THERE IS NO 17.20 TRIP - THIS CREATES DUPLICATE GHOSTS
   if (isYellowRed) departureTimeObject.minute = closestNthMinute(20)
   if (isBrown) departureTimeObject.minute = closestNthMinute(20)
   if (isGray) departureTimeObject.minute = closestNthMinute(30)
