@@ -5,6 +5,7 @@ export const zodEnv = z.object({
   OSRM: z.string(),
   JWT_SECRET: z.string(),
   DISABLE_CRAWLER: z.string().optional(),
+  DISABLE_LOGGING: z.string().optional(),
 })
 
 declare global {

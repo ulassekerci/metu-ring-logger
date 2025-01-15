@@ -78,6 +78,7 @@ export const crawl = async () => {
         plate: ring.id,
       }
 
+      if (process.env.DISABLE_LOGGING) return
       await sql`INSERT INTO ${sql(dbTable)} ${sql(databaseRow)}`
     })
 
