@@ -2,15 +2,11 @@ import { Hono } from 'hono'
 import { AvgTripPoint } from '../interfaces'
 import { DateTime } from 'luxon'
 import sql from '../util/db'
+import { jwt } from 'hono/jwt'
 import { countRingTimes, formatRingData, queryAllTrips } from '../functions/trips'
 import { findAverageTrip } from '../functions/average'
-import { jwt } from 'hono/jwt'
-import {
-  getGhostLocations,
-  getRelevantAverageTrips,
-  getRelevantDepartureTimes,
-  ghostLocationsCache,
-} from '../functions/ghost'
+import { getGhostLocations, getRelevantAverageTrips } from '../functions/ghost'
+import { getRelevantDepartureTimes, ghostLocationsCache } from '../functions/ghost'
 import { lastCrawl } from '../crawler'
 
 const app = new Hono()
@@ -19,10 +15,11 @@ app.use('/update', jwt({ secret: process.env.JWT_SECRET }))
 app.get('/', async (c) => {
   // Check the cache first
   const cache = ghostLocationsCache
-  if (cache.timestamp >= lastCrawl.timestamp) return c.json(cache.data)
+  if (cache.timestamp && lastCrawl.timestamp && cache.timestamp > lastCrawl.timestamp) {
+    return c.json(cache.data)
+  }
   // If the cache is outdated, query and calculate the ghost points
   const departures = await getRelevantDepartureTimes()
-  if (departures.length === 0) return c.json({ message: 'No trips were recorded at this time' }, 204)
   const averageTrips = await getRelevantAverageTrips(departures)
   const ghostPoints = await getGhostLocations(averageTrips)
   return c.json(ghostPoints)

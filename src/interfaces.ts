@@ -55,3 +55,7 @@ export interface Stop {
   lng: number
   address: string | null
 }
+
+export interface DepartureTime {
+  departure: string
+}

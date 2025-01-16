@@ -1,20 +1,11 @@
 import { DateTime } from 'luxon'
 import sql from '../util/db'
-import { AvgTripPoint } from '../interfaces'
+import { AvgTripPoint, DepartureTime } from '../interfaces'
 import { lastCrawl } from '../crawler'
 
-export interface DepartureTime {
-  departure: string
-}
-
-interface GhostLocationCache {
-  data: AvgTripPoint[]
-  timestamp: DateTime
-}
-
-export const ghostLocationsCache: GhostLocationCache = {
-  data: [],
-  timestamp: DateTime.fromMillis(0),
+export const ghostLocationsCache = {
+  data: [] as AvgTripPoint[],
+  timestamp: null as DateTime | null,
 }
 
 export const getRelevantDepartureTimes: () => Promise<DepartureTime[]> = async () => {
