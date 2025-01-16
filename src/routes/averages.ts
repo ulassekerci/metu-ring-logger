@@ -22,7 +22,7 @@ app.get('/', async (c) => {
   if (cache.timestamp >= lastCrawl.timestamp) return c.json(cache.data)
   // If the cache is outdated, query and calculate the ghost points
   const departures = await getRelevantDepartureTimes()
-  if (departures.length === 0) return c.json({ message: 'No trips were recorded at this time' }, 404)
+  if (departures.length === 0) return c.json({ message: 'No trips were recorded at this time' }, 204)
   const averageTrips = await getRelevantAverageTrips(departures)
   const ghostPoints = await getGhostLocations(averageTrips)
   return c.json(ghostPoints)
