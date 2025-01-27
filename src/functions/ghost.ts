@@ -21,10 +21,10 @@ export const getRelevantDepartureTimes: () => Promise<DepartureTime[]> = async (
 }
 
 export const getRelevantAverageTrips = async (departures: DepartureTime[]) => {
-  return (await sql`
+  return await sql<AvgTripPoint[]>`
       SELECT * FROM ring_avg
       WHERE departure in ${sql(departures.map((row) => row.departure))}
-      ORDER BY time ASC`) as AvgTripPoint[]
+      ORDER BY time ASC`
 }
 
 export const getGhostLocations = async (avgPoints: AvgTripPoint[], filterLive = true) => {

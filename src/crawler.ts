@@ -14,8 +14,8 @@ export const lastCrawl = {
 
 export const crawl = async () => {
   try {
-    const ringReq = await axios.get('https://ring.metu.edu.tr/ring.json')
-    const ringData = ringReq.data as RingData[] | string
+    const ringReq = await axios.get<RingData[] | string>('https://ring.metu.edu.tr/ring.json')
+    const ringData = ringReq.data
 
     const isWeekend = DateTime.now().setZone('Europe/Istanbul').minus({ hours: 3 }).isWeekend
     const dbTable = isWeekend ? 'ring_history_we' : 'ring_history'
@@ -32,11 +32,10 @@ export const crawl = async () => {
     if (!checkMovement(ringData)) return
 
     // Get last records from database
-    const lastTripData = (await sql`
+    const lastTripData = await sql<RingLog[]>`
       SELECT * FROM ${sql(dbTable)}
       WHERE timestamp > NOW() - INTERVAL '1 hour' 
-      ORDER BY "timestamp" ASC
-    `) as RingLog[]
+      ORDER BY "timestamp" ASC`
 
     const lastTripIDs = lastTripData.map((trip) => trip.trip_id)
     const lastDepartures = lastTripIDs.map((id) => {

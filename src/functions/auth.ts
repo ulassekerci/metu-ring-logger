@@ -10,7 +10,7 @@ export interface User {
 }
 
 export const authUser = async (email: string, password: string) => {
-  const userData = (await sql`SELECT * FROM users WHERE email = ${email}`)[0] as User
+  const userData = (await sql<User[]>`SELECT * FROM users WHERE email = ${email}`)[0]
   if (!userData) throw new Error('User not found')
   const isAuthed = await argon2.verify(userData.password, password)
   if (!isAuthed) throw new Error('Invalid password')
@@ -28,26 +28,25 @@ export const signUser = async (user: User) => {
 
 export const createUser = async (user: User) => {
   const hash = await argon2.hash(user.password)
-  const insertedUser = await sql`
+  const insertedUser = await sql<User[]>`
   INSERT INTO users (name, email, password) 
   VALUES (${user.name}, ${user.email}, ${hash})
   RETURNING *`
-  return insertedUser[0] as User
+  return insertedUser[0]
 }
 
 export const getUser = async (email: string) => {
-  const user = await sql`SELECT * FROM users WHERE email = ${email}`
-  return user[0] as User
+  const user = await sql<User[]>`SELECT * FROM users WHERE email = ${email}`
+  return user[0]
 }
 
 export const updateUser = async (user: User) => {
-  const updatedUser = await sql`
+  const updatedUser = await sql<User[]>`
     UPDATE users
     SET name = ${user.name}, password = ${user.password}
     WHERE email = ${user.email}
-    RETURNING *
-    `
-  return updatedUser[0] as User
+    RETURNING *`
+  return updatedUser[0]
 }
 
 export const deleteUser = async (email: string) => {
@@ -55,5 +54,5 @@ export const deleteUser = async (email: string) => {
 }
 
 export const listUsers = async () => {
-  return (await sql`SELECT * FROM users`) as User[]
+  return await sql<User[]>`SELECT * FROM users`
 }

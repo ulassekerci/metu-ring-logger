@@ -3,11 +3,10 @@ import { FormattedTrip, RingLog } from '../interfaces'
 import sql from '../util/db'
 
 export const queryTrip = async (tripID: string) => {
-  return (await sql`
+  return await sql<RingLog[]>`
     SELECT * FROM ring_history
     WHERE trip_id = ${tripID}
-    ORDER BY timestamp DESC
-  `) as RingLog[]
+    ORDER BY timestamp DESC`
 }
 
 export const queryTrips = async ({ start, end }: { start: DateTime; end: DateTime }) => {
@@ -15,19 +14,17 @@ export const queryTrips = async ({ start, end }: { start: DateTime; end: DateTim
   // End time is 3 AM of the next day to include all trips of the end day
   const startWithTime = start.set({ hour: 3 })
   const endWithTime = end.plus({ days: 1 }).set({ hour: 3 })
-  return (await sql`
+  return await sql<RingLog[]>`
     SELECT * FROM ring_history
     WHERE timestamp >= ${startWithTime.toJSDate()}
     AND timestamp <= ${endWithTime.toJSDate()}
-    ORDER BY timestamp DESC
-  `) as RingLog[]
+    ORDER BY timestamp DESC`
 }
 
 export const queryAllTrips = async () => {
-  return (await sql`
+  return await sql<RingLog[]>`
     SELECT * FROM ring_history
-    ORDER BY timestamp DESC
-  `) as RingLog[]
+    ORDER BY timestamp DESC`
 }
 
 export const formatRingData = (ringData: RingLog[], filterLive?: boolean) => {
