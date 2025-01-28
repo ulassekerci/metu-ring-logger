@@ -21,8 +21,8 @@ export const findAverageTrip = (trips: FormattedTrip[]) => {
 const calculateDuration = (trip: FormattedTrip) => {
   // Calculate the duration from departure to the middle stop
   // and add it to the trip object
-  // TODO: I don't remember why I used middle stop instead of the last stop
-  // check if it's a good idea
+  // TODO: I used middle stop because last stop is also the first stop
+  // not sure if it's a good idea
   const departureTime = DateTime.fromFormat(trip.departure, 'HH.mm')
   const middleStop = getMiddleStop(trip.points[0].color)
   const closestPoint = findClosestPointToStop(middleStop, trip.points)

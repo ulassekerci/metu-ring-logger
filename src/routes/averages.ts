@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { AvgTripPoint } from '../interfaces'
+import { AvgTripPoint, RingLog } from '../interfaces'
 import { DateTime } from 'luxon'
 import sql from '../util/db'
 import { jwt } from 'hono/jwt'
@@ -23,6 +23,26 @@ app.get('/', async (c) => {
   const averageTrips = await getRelevantAverageTrips(departures)
   const ghostPoints = await getGhostLocations(averageTrips)
   return c.json(ghostPoints)
+})
+
+// TODO: Clean up after testing and make time not hardcoded
+app.get('/:departure', async (c) => {
+  const depParam = c.req.param('departure')
+  const reqDeparture = DateTime.fromFormat(depParam, 'HH:mm:ss')
+  const dep10MinAgo = reqDeparture.minus({ minutes: 10 }).toFormat('HH:mm:ss')
+  const dep10MinLater = reqDeparture.plus({ minutes: 10 }).toFormat('HH:mm:ss')
+  const trips = await sql<RingLog[]>`
+    WITH trip_start_times AS (
+      SELECT trip_id, MIN(timestamp) AS departure_time
+      FROM ring_history
+      GROUP BY trip_id
+    )
+    SELECT rh.* FROM ring_history rh
+    JOIN trip_start_times tst ON rh.trip_id = tst.trip_id
+    WHERE tst.departure_time < '2025-01-13 03:00:00'
+    AND tst.departure_time::time BETWEEN ${dep10MinAgo} AND ${dep10MinLater}
+    AND ABS(EXTRACT(EPOCH FROM (timestamp::time - NOW()::time))) <= 30;`
+  return c.json(trips)
 })
 
 app.post('/update', async (c) => {
