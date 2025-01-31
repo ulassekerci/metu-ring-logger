@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import { RingData, RingLog, VehicleTrip } from './interfaces'
+import { RingData, RingLog, VehicleTrip } from './interfaces/ring'
 import sql from './util/db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'

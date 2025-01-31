@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
-import { FormattedTrip, RingLog, Stop } from '../interfaces'
+import { FormattedTrip, RingLog, Stop } from '../interfaces/ring'
 import outliers from 'outliers'
-import { stops } from '../routes/stops'
+import { stops } from '../data/stops'
 
 export const findAverageTrip = (trips: FormattedTrip[]) => {
   const tripsWithDuration = trips.map((trip) => calculateDuration(trip))

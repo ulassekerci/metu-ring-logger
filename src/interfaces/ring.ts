@@ -30,6 +30,19 @@ export interface RingLog {
   timestamp: string
 }
 
+export interface RingLogWithDeparture {
+  id: number
+  trip_id: string
+  lat: string
+  lng: string
+  address: string
+  color: string
+  state: string
+  plate: string
+  timestamp: string
+  departure: string // HH:mm:ss
+}
+
 export interface FormattedTrip {
   tripID: string
   departure: string

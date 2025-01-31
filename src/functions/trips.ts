@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { FormattedTrip, RingLog } from '../interfaces'
+import { FormattedTrip, RingLog } from '../interfaces/ring'
 import sql from '../util/db'
 
 export const queryTrip = async (tripID: string) => {

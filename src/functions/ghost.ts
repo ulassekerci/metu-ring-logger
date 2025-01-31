@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import sql from '../util/db'
-import { AvgTripPoint, DepartureTime } from '../interfaces'
+import { AvgTripPoint, DepartureTime } from '../interfaces/ring'
 import { lastCrawl } from '../crawler'
 
 export const ghostLocationsCache = {
