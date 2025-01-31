@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { AvgTripPoint, RingLog } from '../interfaces'
+import { AvgTripPoint, RingLog } from '../interfaces/ring'
 import { DateTime } from 'luxon'
 import sql from '../util/db'
 import { jwt } from 'hono/jwt'
@@ -8,6 +8,8 @@ import { findAverageTrip } from '../functions/average'
 import { getGhostLocations, getRelevantAverageTrips } from '../functions/ghost'
 import { getRelevantDepartureTimes, ghostLocationsCache } from '../functions/ghost'
 import { lastCrawl } from '../crawler'
+import { adjustPointDepartures, findMiddlePoint } from '../functions/betterAverage'
+import { groupPointsByDeparture, queryRelevantTrips } from '../functions/betterAverage'
 
 const app = new Hono()
 app.use('/update', jwt({ secret: process.env.JWT_SECRET }))
@@ -23,6 +25,23 @@ app.get('/', async (c) => {
   const averageTrips = await getRelevantAverageTrips(departures)
   const ghostPoints = await getGhostLocations(averageTrips)
   return c.json(ghostPoints)
+})
+
+app.get('/test', async (c) => {
+  const beforeQuery = performance.now()
+  const trips = await queryRelevantTrips()
+  const afterQuery = performance.now()
+  const adjustedTrips = adjustPointDepartures(trips)
+  const groupedTrips = groupPointsByDeparture(adjustedTrips)
+  const middlePoints = await Promise.all(groupedTrips.map((group) => findMiddlePoint(group.trips)))
+  const afterOSRM = performance.now()
+  const tripsWithMiddlePoints = groupedTrips.map((trip) => {
+    const middlePoint = middlePoints.find((mp) => mp.departure === trip.departure)
+    return { ...trip, middlePoint }
+  })
+  console.log(`Querying took ${afterQuery - beforeQuery}ms`)
+  console.log(`OSRM took ${afterOSRM - afterQuery}ms`)
+  return c.json(tripsWithMiddlePoints)
 })
 
 // TODO: Clean up after testing and make time not hardcoded
