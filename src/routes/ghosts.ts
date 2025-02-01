@@ -1,10 +1,8 @@
 import { Hono } from 'hono'
-import { jwt } from 'hono/jwt'
-import { adjustPointDepartures, findMiddlePoint } from '../functions/betterAverage'
-import { groupPointsByDeparture, queryRelevantTrips } from '../functions/betterAverage'
+import { adjustPointDepartures, findMiddlePoint } from '../functions/ghosts'
+import { groupPointsByDeparture, queryRelevantTrips } from '../functions/ghosts'
 
 const app = new Hono()
-app.use('/update', jwt({ secret: process.env.JWT_SECRET }))
 
 app.get('/', async (c) => {
   const trips = await queryRelevantTrips()

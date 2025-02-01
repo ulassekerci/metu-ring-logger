@@ -13,7 +13,7 @@ app.get('/', (c) => c.json(lastCrawl))
 app.route('/auth', routes.auth)
 app.route('/trips', routes.trips)
 app.route('/stops', routes.stops)
-app.route('/averages', routes.averages)
+app.route('/ghosts', routes.ghosts)
 app.route('/schedule', routes.schedule)
 
 setInterval(() => {
