@@ -21,12 +21,6 @@ export const queryTrips = async ({ start, end }: { start: DateTime; end: DateTim
     ORDER BY timestamp DESC`
 }
 
-export const queryAllTrips = async () => {
-  return await sql<RingLog[]>`
-    SELECT * FROM ring_history
-    ORDER BY timestamp DESC`
-}
-
 export const formatRingData = (ringData: RingLog[], filterLive?: boolean) => {
   const ringTripIDs = [...new Set(ringData.map((log) => log.trip_id))]
   return ringTripIDs
@@ -73,17 +67,4 @@ export const calculateDeparture = (tripStart: DateTime, ringColor: string) => {
   }
 
   return tripStart.set(departureTimeObject)
-}
-
-// used for updating averages
-export const countRingTimes = (ringTrips: { departure: string; day: number }[]) => {
-  const ringTimes: { time: string; trips: number; days: string }[] = []
-  ringTrips.map((trip) => {
-    const existingTime = ringTimes.find((time) => time.time === trip.departure)
-    if (existingTime) {
-      existingTime.trips += 1
-      existingTime.days += ', ' + trip.day
-    } else ringTimes.push({ time: trip.departure, trips: 1, days: String(trip.day) })
-  })
-  return ringTimes.sort((a, b) => a.time.localeCompare(b.time))
 }

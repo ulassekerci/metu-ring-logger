@@ -30,17 +30,12 @@ export interface RingLog {
   timestamp: string
 }
 
-export interface RingLogWithDeparture {
-  id: number
-  trip_id: string
-  lat: string
-  lng: string
-  address: string
-  color: string
-  state: string
-  plate: string
-  timestamp: string
-  departure: string // HH:mm:ss
+export interface RingLogWithDeparture extends RingLog {
+  departure: string
+}
+
+export interface MiddlePoint extends RingLogWithDeparture {
+  maxDistance: number
 }
 
 export interface FormattedTrip {
@@ -51,15 +46,6 @@ export interface FormattedTrip {
   points: RingLog[]
   day: number
   live: boolean | undefined
-}
-
-export interface AvgTripPoint {
-  lat: string
-  lng: string
-  address: string
-  color: string
-  departure: string
-  time: string
 }
 
 export interface Stop {

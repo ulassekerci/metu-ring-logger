@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon'
 import { schedule } from '../data/schedule'
-import { RingLogWithDeparture } from '../interfaces/ring'
+import { MiddlePoint, RingLogWithDeparture } from '../interfaces/ring'
 import sql from '../util/db'
 import { osrm } from '../util/osrm'
 
@@ -48,7 +48,7 @@ export const groupPointsByDeparture = (ringTrips: RingLogWithDeparture[]) => {
   return groupedTrips
 }
 
-export const findMiddlePoint = async (points: RingLogWithDeparture[]) => {
+export const findMiddlePoint: (points: RingLogWithDeparture[]) => Promise<MiddlePoint> = async (points) => {
   const table = await osrm.getTable(points)
   // Find the point with the smallest sum of distances to all other points
   const sumDistances = table.distances.map((distances) => distances.reduce((a, b) => a + b))
