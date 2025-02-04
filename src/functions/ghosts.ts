@@ -6,6 +6,8 @@ import { osrm } from '../util/osrm'
 
 // Get all trips that are within 30 seconds of the current time
 export const queryRelevantTrips = async () => {
+  const isWeekend = DateTime.now().setZone('Europe/Istanbul').minus({ hours: 3 }).isWeekend
+
   return await sql<RingLogWithDeparture[]>`
   WITH trip_start_times AS (SELECT trip_id, MIN(timestamp) AS departure FROM ring_history GROUP BY trip_id),
   config AS (SELECT value::timestamptz AS cutoff FROM config WHERE key = 'data_cutoff')
@@ -13,6 +15,7 @@ export const queryRelevantTrips = async () => {
   FROM ring_history rh JOIN trip_start_times tst ON rh.trip_id = tst.trip_id
   CROSS JOIN config cfg
   WHERE tst.departure < cfg.cutoff
+  WHERE rh.color ${isWeekend ? '==' : '!='} '#737373'
   AND ABS(EXTRACT(EPOCH FROM (rh.timestamp::time - NOW()::time))) <= 30
   ORDER BY rh.trip_id, ABS(EXTRACT(EPOCH FROM (rh.timestamp - NOW()))) ASC;`
 }
@@ -26,6 +29,7 @@ export const adjustPointDepartures = (ringTrips: RingLogWithDeparture[]) => {
       (sch) => sch.color === trip.color.toUpperCase() || (trip.color === '#ff0000' && sch.color === '#FFFF57')
     )
     // find the closest scheduled time to the trip departure
+    // TODO: fix error when scheduledDepartures is empty - reduce of empty array with no initial value
     const closestScheduledTime = scheduledDepartures.reduce((prev, curr) => {
       const getTimeDiff = (time: string) => {
         const scheduledTime = DateTime.fromFormat(time, 'HH:mm:ss')
