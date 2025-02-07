@@ -9,7 +9,7 @@ import { calculateDeparture } from './functions/trips'
 export const lastCrawl = {
   data: null as RingData[] | null,
   vehicles: [] as VehicleTrip[],
-  timestamp: null as DateTime | null,
+  timestamp: DateTime.fromMillis(0),
 }
 
 export const crawl = async () => {
