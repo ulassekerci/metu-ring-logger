@@ -17,9 +17,6 @@ export const crawl = async () => {
     const ringReq = await axios.get<RingData[] | string>('https://ring.metu.edu.tr/ring.json')
     const ringData = ringReq.data
 
-    const isWeekend = DateTime.now().setZone('Europe/Istanbul').minus({ hours: 3 }).isWeekend
-    const dbTable = isWeekend ? 'ring_history_we' : 'ring_history'
-
     // If there is no data, return
     if (typeof ringData === 'string') {
       lastCrawl.data = null
@@ -33,7 +30,7 @@ export const crawl = async () => {
 
     // Get last records from database
     const lastTripData = await sql<RingLog[]>`
-      SELECT * FROM ${sql(dbTable)}
+      SELECT * FROM ring_history
       WHERE timestamp > NOW() - INTERVAL '1 hour' 
       ORDER BY "timestamp" ASC`
 
@@ -78,7 +75,7 @@ export const crawl = async () => {
       }
 
       if (process.env.DISABLE_LOGGING) return
-      await sql`INSERT INTO ${sql(dbTable)} ${sql(databaseRow)}`
+      await sql`INSERT INTO ring_history ${sql(databaseRow)}`
     })
 
     // Update lastCrawl

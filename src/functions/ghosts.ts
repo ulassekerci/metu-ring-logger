@@ -55,6 +55,7 @@ export const groupPointsByDeparture = (ringTrips: RingLogWithDeparture[]) => {
 export const findMiddlePoint: (points: RingLogWithDeparture[]) => Promise<MiddlePoint> = async (points) => {
   const table = await osrm.getTable(points)
   // Find the point with the smallest sum of distances to all other points
+  // TODO: make it choose one when there are only two points
   const sumDistances = table.distances.map((distances) => distances.reduce((a, b) => a + b))
   const minDistanceIndex = sumDistances.indexOf(Math.min(...sumDistances))
   const maxDistanceOfMin = Math.max(...table.distances[minDistanceIndex])
