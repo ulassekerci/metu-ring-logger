@@ -15,7 +15,7 @@ export const queryRelevantTrips = async () => {
   FROM ring_history rh JOIN trip_start_times tst ON rh.trip_id = tst.trip_id
   CROSS JOIN config cfg
   WHERE tst.departure < cfg.cutoff
-  AND rh.color ${isWeekend ? sql`==` : sql`!=`} '#737373'
+  AND rh.color ${isWeekend ? sql`=` : sql`!=`} '#737373'
   AND ABS(EXTRACT(EPOCH FROM (rh.timestamp::time - NOW()::time))) <= 30
   ORDER BY rh.trip_id, ABS(EXTRACT(EPOCH FROM (rh.timestamp - NOW()))) ASC;`
 }
