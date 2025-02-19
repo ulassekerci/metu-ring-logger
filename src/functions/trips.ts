@@ -49,12 +49,14 @@ export const calculateDeparture = (tripStart: DateTime, ringColor: string) => {
   const isPurple = ringColor === '#9600CD'
   const isBrown = ringColor === '#A64D00'
   const isGray = ringColor === '#737373'
+  const isBlue = ringColor === '#0000ff'
   const departureTimeObject = { minute: 0, second: 0 }
   // TODO: yellow-red last 2 trips are not at 20th minute (17.05 and 17.35) - put a check for that
   // THERE IS NO 17.20 TRIP - THIS CREATES DUPLICATE GHOSTS
   if (isYellowRed) departureTimeObject.minute = closestNthMinute(20)
   if (isBrown) departureTimeObject.minute = closestNthMinute(20)
   if (isGray) departureTimeObject.minute = closestNthMinute(30)
+  if (isBlue) departureTimeObject.minute = closestNthMinute(30)
   if (isPurple) {
     // Purple ring departs every 40 minutes starting at 20.30
     // This finds the closest departure time to the trip start minutes
