@@ -130,8 +130,18 @@ export const schedule = [
     weekend: false,
   },
   {
+    color: '#0000FF',
+    time: '18:00:00',
+    weekend: false,
+  },
+  {
     color: '#A64D00',
     time: '18:20:00',
+    weekend: false,
+  },
+  {
+    color: '#0000FF',
+    time: '18:30:00',
     weekend: false,
   },
   {
@@ -145,8 +155,18 @@ export const schedule = [
     weekend: false,
   },
   {
+    color: '#0000FF',
+    time: '19:00:00',
+    weekend: false,
+  },
+  {
     color: '#A64D00',
     time: '19:20:00',
+    weekend: false,
+  },
+  {
+    color: '#0000FF',
+    time: '19:30:00',
     weekend: false,
   },
   {
@@ -156,6 +176,11 @@ export const schedule = [
   },
   {
     color: '#A64D00',
+    time: '20:00:00',
+    weekend: false,
+  },
+  {
+    color: '#0000FF',
     time: '20:00:00',
     weekend: false,
   },
