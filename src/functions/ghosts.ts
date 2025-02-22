@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
-import { schedule } from '../data/schedule'
 import { MiddlePoint, RingLogWithDeparture } from '../interfaces/ring'
 import sql from '../util/db'
 import { osrm } from '../util/osrm'
+import { predictDeparture } from './schedule'
 
 // Get all trips that are within 30 seconds of the current time
 export const queryRelevantTrips = async () => {
@@ -20,25 +20,12 @@ export const queryRelevantTrips = async () => {
   ORDER BY rh.trip_id, ABS(EXTRACT(EPOCH FROM (rh.timestamp - NOW()))) ASC;`
 }
 
-// Round the trip departure to the nearest scheduled departure time
-// TODO: make it readable
+// Update trip departure to scheduled departure
 export const adjustPointDepartures = (ringTrips: RingLogWithDeparture[]) => {
   return ringTrips.map((trip) => {
     const tripDeparture = DateTime.fromFormat(trip.departure, 'HH:mm:ss')
-    const scheduledDepartures = schedule.filter(
-      (sch) => sch.color === trip.color.toUpperCase() || (trip.color === '#ff0000' && sch.color === '#FFFF57')
-    )
-    // find the closest scheduled time to the trip departure
-    // TODO: fix error when scheduledDepartures is empty - reduce of empty array with no initial value
-    const closestScheduledTime = scheduledDepartures.reduce((prev, curr) => {
-      const getTimeDiff = (time: string) => {
-        const scheduledTime = DateTime.fromFormat(time, 'HH:mm:ss')
-        const timeDiff = scheduledTime.diff(tripDeparture).as('seconds')
-        return Math.abs(timeDiff)
-      }
-      return getTimeDiff(curr.time) < getTimeDiff(prev.time) ? curr : prev
-    })
-    return { ...trip, departure: closestScheduledTime.time }
+    const scheduledDeparture = predictDeparture(tripDeparture, trip.color).toFormat('HH.mm')
+    return { ...trip, departure: scheduledDeparture }
   })
 }
 

@@ -4,7 +4,7 @@ import sql from './util/db'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'
 import { checkMovement, detectNewTrip } from './util/helpers'
-import { calculateDeparture } from './functions/trips'
+import { predictDeparture } from './functions/schedule'
 
 export const lastCrawl = {
   data: null as RingData[] | null,
@@ -45,7 +45,7 @@ export const crawl = async () => {
         lastTripStartAddress.includes('Garaj') ||
         lastTripStartAddress.includes('BOTE-MYO')
       )
-      const ringTime = calculateDeparture(lastTripDeparture, lastTripStartPoint.color)
+      const ringTime = predictDeparture(lastTripDeparture, lastTripStartPoint.color)
       return { ...lastTripStartPoint, timestamp: isSuspicious ? null : ringTime.toFormat('HH:mm:ss') }
     })
 
@@ -83,7 +83,7 @@ export const crawl = async () => {
     lastCrawl.vehicles = lastCrawl.vehicles.filter((old) => ringData.some((newR) => newR.id === old.plate))
     lastCrawl.timestamp = DateTime.now().setZone('Europe/Istanbul')
   } catch (error) {
-    if (error instanceof AxiosError) console.log('Crawling error from axios: ', error.message)
+    if (error instanceof AxiosError) console.log('Axios Error: ', error.message)
     else console.error(error)
   }
 }
