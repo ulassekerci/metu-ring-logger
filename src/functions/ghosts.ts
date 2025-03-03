@@ -30,11 +30,15 @@ export const adjustPointDepartures = (ringTrips: RingLogWithDeparture[]) => {
 }
 
 export const groupPointsByDeparture = (ringTrips: RingLogWithDeparture[]) => {
-  const groupedTrips: { departure: string; trips: RingLogWithDeparture[] }[] = []
+  const groupedTrips: { departure: string; color: string; trips: RingLogWithDeparture[] }[] = []
   const departureTimes = new Set(ringTrips.map((trip) => trip.departure))
   departureTimes.forEach((departure) => {
     const trips = ringTrips.filter((trip) => trip.departure === departure)
-    groupedTrips.push({ departure, trips })
+    const colors = new Set(trips.map((trip) => trip.color))
+    colors.forEach((color) => {
+      const filteredTrips = trips.filter((trip) => trip.color === color)
+      groupedTrips.push({ departure, color, trips: filteredTrips })
+    })
   })
   return groupedTrips
 }
