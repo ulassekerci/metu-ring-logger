@@ -1,13 +1,12 @@
 import { DateTime } from 'luxon'
-import { MiddlePoint, RingLogWithDeparture } from '../interfaces/ring'
+import { MiddlePoint, RingLogWithDeparture, VehicleTrip } from '../interfaces/ring'
 import sql from '../util/db'
 import { osrm } from '../util/osrm'
 import { predictDeparture } from './schedule'
 
-// Get all trips that are within 30 seconds of the current time
 export const queryRelevantTrips = async () => {
   const isWeekend = DateTime.now().setZone('Europe/Istanbul').minus({ hours: 3 }).isWeekend
-
+  // Query trips made before cutoff date that recorded within 30 seconds from current time
   return await sql<RingLogWithDeparture[]>`
   WITH trip_start_times AS (SELECT trip_id, MIN(timestamp) AS departure FROM ring_history GROUP BY trip_id),
   config AS (SELECT value::timestamptz AS cutoff FROM config WHERE key = 'data_cutoff')
@@ -20,7 +19,6 @@ export const queryRelevantTrips = async () => {
   ORDER BY rh.trip_id, ABS(EXTRACT(EPOCH FROM (rh.timestamp - NOW()))) ASC;`
 }
 
-// Update trip departure to scheduled departure
 export const adjustPointDepartures = (ringTrips: RingLogWithDeparture[]) => {
   return ringTrips.map((trip) => {
     const tripDeparture = DateTime.fromFormat(trip.departure, 'HH:mm:ss')
@@ -43,12 +41,17 @@ export const groupPointsByDeparture = (ringTrips: RingLogWithDeparture[]) => {
   return groupedTrips
 }
 
+export const removeGhostsWithLiveData = (ghosts: RingLogWithDeparture[], vehicles: VehicleTrip[]) => {
+  return ghosts.filter((ghost) => {
+    return vehicles.some((liveVehicle) => liveVehicle.departure === ghost.departure)
+  })
+}
+
 export const findMiddlePoint: (points: RingLogWithDeparture[]) => Promise<MiddlePoint> = async (points) => {
   const table = await osrm.getTable(points)
-  // Find the point with the smallest sum of distances to all other points
-  // TODO: make it choose one when there are only two points
   const sumDistances = table.distances.map((distances) => distances.reduce((a, b) => a + b))
   const minDistanceIndex = sumDistances.indexOf(Math.min(...sumDistances))
+  // Calculate the distance between middle point and the farthest point to middle point
   const maxDistanceOfMin = Math.max(...table.distances[minDistanceIndex])
   return { ...points[minDistanceIndex], maxDistance: maxDistanceOfMin }
 }
