@@ -43,7 +43,7 @@ export const groupPointsByDeparture = (ringTrips: RingLogWithDeparture[]) => {
 
 export const removeGhostsWithLiveData = (ghosts: RingLogWithDeparture[], vehicles: VehicleTrip[]) => {
   return ghosts.filter((ghost) => {
-    return vehicles.some((liveVehicle) => liveVehicle.departure === ghost.departure)
+    return !vehicles.some((liveVehicle) => liveVehicle.departure === ghost.departure)
   })
 }
 
