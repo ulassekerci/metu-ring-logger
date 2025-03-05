@@ -39,11 +39,14 @@ export const crawl = async () => {
       const lastTripStartPoint = lastTripData.filter((trip) => trip.trip_id === id)[0]
       const lastTripDeparture = DateTime.fromJSDate(new Date(lastTripStartPoint.timestamp))
       const lastTripStartAddress = lastTripStartPoint.address
+      // TODO: clean
       const isSuspicious = !(
         lastTripStartAddress.includes('A1') ||
         lastTripStartAddress.includes('A2') ||
         lastTripStartAddress.includes('Garaj') ||
-        lastTripStartAddress.includes('BOTE-MYO')
+        lastTripStartAddress.includes('BOTE-MYO') ||
+        (lastTripStartAddress.includes('Dogu yurtlar') && lastTripStartPoint.color === '#0000ff') ||
+        (lastTripStartAddress.includes('Is bankasi') && lastTripStartPoint.color === '#0000ff')
       )
       const ringTime = predictDeparture(lastTripDeparture, lastTripStartPoint.color)
       return { ...lastTripStartPoint, timestamp: isSuspicious ? null : ringTime.toFormat('HH:mm:ss') }
