@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { authUser, createUser, signUser } from '../functions/auth'
 import { PostgresError } from 'postgres'
 import { jwt, verify } from 'hono/jwt'
+import { DateTime } from 'luxon'
 
 const app = new Hono()
 
@@ -17,6 +18,8 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 })
+
+let lastLoginAttempt = DateTime.fromMillis(0)
 
 // middleware to prevent guest registration
 app.use('/register', jwt({ secret: process.env.JWT_SECRET }))
@@ -34,6 +37,10 @@ app.get('/me', async (c) => {
 
 app.post('/login', zValidator('json', loginSchema), async (c) => {
   const { email, password } = c.req.valid('json')
+  // Limit login attempts
+  const timeAfterLastLogin = Math.abs(lastLoginAttempt.diffNow('seconds').seconds)
+  if (timeAfterLastLogin < 3) return c.json({ message: 'Too Many Requests' }, 429)
+  lastLoginAttempt = DateTime.now()
   try {
     const user = await authUser(email, password)
     const userToken = await signUser(user)
