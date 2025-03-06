@@ -33,16 +33,20 @@ export const checkMovement = (data: RingData[]) => {
 export const detectNewTrip = (newData: RingData, lastData?: VehicleTrip) => {
   const redColor = '#ff0000'
   const yellowColor = '#ffff57'
-  const yellowState = ' - ODTU A2 Kapisi - yellow'
-  const brownState = ' - ODTU A1 Kapisi - brown'
-  const purpleState = ' - ODTU A1 Kapisi - purple'
-  const blueState = ' - Dogu yurtlar - blue'
+  const yellowDepartureState = ' - ODTU A2 Kapisi - yellow'
+  const brownDepartureState = ' - ODTU A1 Kapisi - brown'
+  const purpleDepartureState = ' - ODTU A1 Kapisi - purple'
+  const blueDepartureState = ' - Dogu yurtlar - blue'
+  // New trip if no data in the last hour
   if (!lastData) return true
+  // Yellow to red color update is fine
+  if (lastData.color === yellowColor && newData.clr === redColor) return false
+  // otherwise it's a new trip
   if (lastData.color !== newData.clr) return true
-  if (lastData.color === redColor && newData.clr === yellowColor) return true
-  if (lastData.state !== brownState && newData.key === brownState) return true
-  if (lastData.state !== yellowState && newData.key === yellowState) return true
-  if (lastData.state !== purpleState && newData.key === purpleState) return true
-  if (lastData.state !== blueState && newData.key === blueState) return true
+  // It's a new trip if state equals to departureState
+  if (lastData.state !== brownDepartureState && newData.key === brownDepartureState) return true
+  if (lastData.state !== yellowDepartureState && newData.key === yellowDepartureState) return true
+  if (lastData.state !== purpleDepartureState && newData.key === purpleDepartureState) return true
+  if (lastData.state !== blueDepartureState && newData.key === blueDepartureState) return true
   return false
 }
