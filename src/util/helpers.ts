@@ -50,3 +50,12 @@ export const detectNewTrip = (newData: RingData, lastData?: VehicleTrip) => {
   if (lastData.state !== blueDepartureState && newData.key === blueDepartureState) return true
   return false
 }
+
+export const colorEquals = (color1: string, color2: string) => {
+  const firstColor = color1.toUpperCase()
+  const secondColor = color2.toUpperCase()
+  if (firstColor === secondColor) return true
+  else if (firstColor === '#FF0000' && secondColor === '#FFFF57') return true
+  else if (firstColor === '#FFFF57' && secondColor === '#FF0000') return true
+  else return false
+}
