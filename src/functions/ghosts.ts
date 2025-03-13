@@ -3,6 +3,7 @@ import { MiddlePoint, RingLogWithDeparture, VehicleTrip } from '../interfaces/ri
 import sql from '../util/db'
 import { osrm } from '../util/osrm'
 import { predictDeparture } from './schedule'
+import { colorEquals } from '../util/helpers'
 
 export const queryRelevantTrips = async () => {
   const isWeekend = DateTime.now().setZone('Europe/Istanbul').minus({ hours: 3 }).isWeekend
@@ -29,22 +30,14 @@ export const adjustPointDepartures = (ringTrips: RingLogWithDeparture[]) => {
 
 export const groupPointsByDeparture = (ringTrips: RingLogWithDeparture[]) => {
   const groupedTrips: { departure: string; color: string; trips: RingLogWithDeparture[] }[] = []
-  const departureTimes = new Set(ringTrips.map((trip) => trip.departure))
-  departureTimes.forEach((departure) => {
-    const trips = ringTrips.filter((trip) => trip.departure === departure)
-    const colors = new Set(trips.map((trip) => trip.color))
-    colors.forEach((color) => {
-      const filteredTrips = trips.filter((trip) => trip.color === color)
-      groupedTrips.push({ departure, color, trips: filteredTrips })
-    })
+  ringTrips.forEach((trip) => {
+    const tripGroup = groupedTrips.find(
+      (group) => group.departure === trip.departure && colorEquals(group.color, trip.color)
+    )
+    if (tripGroup) tripGroup.trips.push(trip)
+    else groupedTrips.push({ departure: trip.departure, color: trip.color, trips: [trip] })
   })
   return groupedTrips
-}
-
-export const removeGhostsWithLiveData = (ghosts: RingLogWithDeparture[], vehicles: VehicleTrip[]) => {
-  return ghosts.filter((ghost) => {
-    return !vehicles.some((liveVehicle) => liveVehicle.departure === ghost.departure)
-  })
 }
 
 export const findMiddlePoint: (points: RingLogWithDeparture[]) => Promise<MiddlePoint> = async (points) => {
