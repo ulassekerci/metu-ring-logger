@@ -3,7 +3,6 @@ import { adjustPointDepartures, findMiddlePoint } from '../functions/ghosts'
 import { groupPointsByDeparture, queryRelevantTrips } from '../functions/ghosts'
 import { RingLogWithDeparture } from '../interfaces/ring'
 import { DateTime } from 'luxon'
-import { colorEquals } from '../util/helpers'
 
 const app = new Hono()
 
@@ -28,15 +27,17 @@ app.get('/', async (c) => {
   const adjustedTrips = adjustPointDepartures(trips)
   // Group trip points by their departure times
   const groupedTrips = groupPointsByDeparture(adjustedTrips)
-  // Find which point is in the middle
-  const middlePoints = await Promise.all(
-    groupedTrips.filter((group) => group.trips.length > 1).map((group) => findMiddlePoint(group.trips))
+  // Find middle points of trips
+  const tripsWithMiddlePoints = await Promise.all(
+    groupedTrips.map(async (group) => {
+      if (group.trips.length > 1) {
+        const middlePoint = await findMiddlePoint(group.trips)
+        return { ...group, middlePoint }
+      } else {
+        return { ...group, middlePoint: group.trips[0] }
+      }
+    })
   )
-  const tripsWithMiddlePoints = groupedTrips.map((trip) => {
-    const middlePoint =
-      middlePoints.find((mp) => mp.departure === trip.departure && colorEquals(mp.color, trip.color)) || trip.trips[0]
-    return { ...trip, middlePoint }
-  })
   // Update cache
   ghostCache.data = tripsWithMiddlePoints
   ghostCache.cacheTime = DateTime.now()
