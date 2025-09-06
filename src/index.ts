@@ -20,6 +20,8 @@ app.get('/', (req: Request, res: Response) => {
 
 process.env.ENABLE_MOCK && app.use('/mock', routes.mock)
 
+app.use(errorHandler)
+
 app.listen(port, () => {
   console.log(`Running at port ${port}`)
 })
