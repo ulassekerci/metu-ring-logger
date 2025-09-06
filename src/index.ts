@@ -3,7 +3,9 @@ import type { Request, Response } from 'express'
 import cors from 'cors'
 import { Settings } from 'luxon'
 import { shouldPoll } from './poller/should'
-import { poll } from './poller'
+import { lastPoll, poll } from './poller'
+import { routes } from './routes'
+import { errorHandler } from './utils/err'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -13,8 +15,10 @@ app.use(express.json())
 Settings.defaultZone = 'Europe/Istanbul'
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello')
+  res.json(lastPoll)
 })
+
+process.env.ENABLE_MOCK && app.use('/mock', routes.mock)
 
 app.listen(port, () => {
   console.log(`Running at port ${port}`)
