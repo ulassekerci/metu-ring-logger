@@ -53,8 +53,8 @@ const detectNewTrip = (newPoint: RingPoint, lastRows: RingRow[]) => {
   const tripLine = ringLines.find((line) => line.sections.find((section) => section.color === lastPoint.color))
   const departurePoint = tripLine?.sections[0].stops[0].stop
   if (!departurePoint) return true
-  const lastPointDistance = distance(departurePoint.point, lastPoint.point, { units: 'meters' })
-  const newPointDistance = distance(departurePoint.point, newPoint.point, { units: 'meters' })
+  const lastPointDistance = distance(departurePoint.turfPoint, lastPoint.turfPoint, { units: 'meters' })
+  const newPointDistance = distance(departurePoint.turfPoint, newPoint.turfPoint, { units: 'meters' })
   if (lastPointDistance < 100 && newPointDistance > 100) return true
   return false
 }

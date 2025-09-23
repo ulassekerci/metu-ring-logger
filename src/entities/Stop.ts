@@ -1,4 +1,4 @@
-import { point } from '@turf/turf'
+import * as turf from '@turf/turf'
 
 export class Stop {
   name: string
@@ -6,8 +6,8 @@ export class Stop {
   lng: number
   address?: string // address string from metu api
 
-  get point() {
-    return point([this.lng, this.lat])
+  get turfPoint() {
+    return turf.point([this.lng, this.lat])
   }
 
   constructor(info: { name: string; lat: number; lng: number; address?: string }) {

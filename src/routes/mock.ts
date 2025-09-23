@@ -14,7 +14,7 @@ setInterval(() => {
 }, 1000)
 
 mock.get('/', async (req: Request, res: Response) => {
-  const trips = await sql<RingRow[]>`
+  const trips = await sql<(RingRow & { timestamp: number })[]>`
     SELECT * from ring_history
     WHERE timestamp BETWEEN ${time.minus({ minutes: 5 }).toSQL()}
     AND ${time.plus({ minutes: 5 }).toSQL()};

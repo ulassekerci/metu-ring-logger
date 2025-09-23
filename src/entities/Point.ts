@@ -1,6 +1,6 @@
-import { DateTime } from 'luxon'
 import { MetuData, RingData, RingRow } from '../interfaces/ring'
 import * as turf from '@turf/turf'
+import { ServiceTime } from './ServiceTime'
 
 export class RingPoint {
   lat: number
@@ -9,7 +9,7 @@ export class RingPoint {
   color: string
   state: string
   plate: string
-  timestamp: DateTime
+  serviceTime: ServiceTime
 
   private constructor(data: RingData) {
     this.lat = Number(data.lat)
@@ -18,10 +18,10 @@ export class RingPoint {
     this.color = data.color
     this.state = data.state
     this.plate = data.plate
-    this.timestamp = data.timestamp
+    this.serviceTime = data.serviceTime
   }
 
-  get point() {
+  get turfPoint() {
     return turf.point([this.lng, this.lat])
   }
 
@@ -33,14 +33,12 @@ export class RingPoint {
       color: metuPoint.clr,
       state: metuPoint.key,
       plate: metuPoint.id,
-      timestamp: DateTime.now(),
+      serviceTime: ServiceTime.now(),
     })
   }
 
   static fromDb(dbPoint: RingRow) {
-    const pointDate = new Date(dbPoint.timestamp)
-    const timestamp = DateTime.fromJSDate(pointDate)
-    return new RingPoint({ ...dbPoint, timestamp })
+    return new RingPoint({ ...dbPoint, serviceTime: new ServiceTime(dbPoint.service_time) })
   }
 
   detectMovement = (oldData: RingPoint[] | null) => {

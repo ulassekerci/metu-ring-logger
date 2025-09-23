@@ -1,9 +1,7 @@
 import express from 'express'
-import type { Request, Response } from 'express'
 import cors from 'cors'
 import { Settings } from 'luxon'
-import { shouldPoll } from './poller/should'
-import { lastPoll, poll } from './poller'
+import { poll } from './poller'
 import { routes } from './routes'
 import { errorHandler } from './utils/err'
 
@@ -14,9 +12,9 @@ app.use(cors())
 app.use(express.json())
 Settings.defaultZone = 'Europe/Istanbul'
 
-app.get('/', (req: Request, res: Response) => {
-  res.json(lastPoll)
-})
+app.use('/', routes.live)
+app.use('/ghosts', routes.ghosts)
+app.use('/schedule', routes.schedule)
 
 process.env.ENABLE_MOCK && app.use('/mock', routes.mock)
 
@@ -27,5 +25,5 @@ app.listen(port, () => {
 })
 
 setInterval(() => {
-  if (shouldPoll()) poll()
+  if (!process.env.DISABLE_POLLING) poll()
 }, 1000)
