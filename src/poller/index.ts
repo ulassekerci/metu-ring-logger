@@ -6,6 +6,8 @@ import sql from '../utils/db'
 import { ringLines } from '../data/lines'
 import { distance } from '@turf/turf'
 import { generateID } from '../utils/id'
+import * as turf from '@turf/turf'
+import { garagePolygon } from '../data/garage'
 
 export const lastPoll = {
   data: null as RingPoint[] | null,
@@ -37,6 +39,8 @@ export const poll = async () => {
   `
 
   newPoints.forEach(async (newPoint) => {
+    const isParked = turf.booleanPointInPolygon(newPoint.turfPoint, garagePolygon)
+    if (isParked) return
     const isNewTrip = detectNewTrip(newPoint, lastRows)
     const newID = generateID()
     const tripID = isNewTrip ? newID : lastRows[0].trip_id
