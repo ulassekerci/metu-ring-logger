@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
-    "start": "node --env-file=.env dist/index.js"
+    "start": "node dist/index.js",
+    "localstart": "node --env-file=.env dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +15,7 @@
   "type": "commonjs",
   "dependencies": {
     "@turf/turf": "^7.2.0",
-    "axios": "^1.11.0",
+    "axios": "^1.12.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "luxon": "^3.7.1",
