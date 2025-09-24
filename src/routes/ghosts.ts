@@ -12,7 +12,7 @@ type Ghost = { departure: string; trips: { id: string; point: RingPoint }[] }
 
 app.get('/', async (req: Request, res: Response) => {
   // TODO: cache
-
+  // TODO: create a proper object structure
   const ghosts: Ghost[] = []
   const trips = await getRelevantTrips()
   const grouped = groupTrips(trips)
@@ -22,6 +22,7 @@ app.get('/', async (req: Request, res: Response) => {
       trips: group.trips.map((trip) => ({
         id: trip.id,
         point: trip.getClosestPointToNow(),
+        departure: trip.departureTime,
       })),
     })
   })
