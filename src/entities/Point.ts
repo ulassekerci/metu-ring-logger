@@ -57,5 +57,6 @@ export class RingPoint {
     color: this.color,
     state: this.state,
     plate: this.plate,
+    service_time: ServiceTime.now(),
   })
 }

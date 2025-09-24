@@ -1,4 +1,3 @@
-// import { DateTime } from 'luxon'
 import { ServiceTime } from '../entities/ServiceTime'
 
 export interface MetuData {
@@ -20,7 +19,6 @@ export interface RingData {
   color: string
   state: string
   plate: string
-  // timestamp: DateTime
   serviceTime: ServiceTime
 }
 
@@ -33,6 +31,5 @@ export interface RingRow {
   color: string
   state: string
   plate: string
-  // timestamp: string
   service_time: number // seconds after 06.00
 }
