@@ -23,7 +23,7 @@ export class RingLine {
     return this.sections[0].stops[0].stop
   }
 
-  getClosestDeparture = (departure: ServiceTime) => {
+  getClosestDeparture(departure: ServiceTime) {
     return this.departures.reduce((prev, curr) => {
       const prevTime = ServiceTime.fromFormat(prev, 'HH:mm')
       const currTime = ServiceTime.fromFormat(curr, 'HH:mm')
@@ -33,7 +33,7 @@ export class RingLine {
     })
   }
 
-  estimateDeparture = (firstPoint: RingPoint) => {
+  estimateDeparture(firstPoint: RingPoint) {
     const sections = this.sections.filter((section) => section.color === firstPoint.color)
     const stops = sections.flatMap((section) => section.stops)
     const closestStop = stops.reduce((prev, curr) => {

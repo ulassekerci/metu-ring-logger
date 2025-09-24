@@ -15,7 +15,7 @@ export class RingPoint {
     this.lat = Number(data.lat)
     this.lng = Number(data.lng)
     this.address = data.address
-    this.color = data.color
+    this.color = data.color.toUpperCase()
     this.state = data.state
     this.plate = data.plate
     this.serviceTime = data.serviceTime

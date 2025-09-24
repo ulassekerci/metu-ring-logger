@@ -17,7 +17,9 @@ export class RingTrip {
     this.id = id
     this.vehiclePlate = rows[0].plate
     this.points = rows.map((row) => RingPoint.fromDb(row))
-    this.line = ringLines.find((line) => line.colors.includes(rows[0].color))!
+    const ringLine = ringLines.find((line) => line.colors.includes(rows[0].color.toUpperCase()))
+    if (!ringLine) throw new Error(`${rows[0].color} colored line not found`)
+    this.line = ringLine
 
     // if first point is far from departure stop consider a partial trip
     const firstPoint = this.points[0].turfPoint
@@ -30,10 +32,7 @@ export class RingTrip {
       // TODO: finding closest stop isn't reliable - use polyline matching
       this.departureTime = this.line.estimateDeparture(this.points[0])
     } else {
-      const departureTime = this.points[0].serviceTime
-      // shift departure time by 5 mins to compensate late trip detection
-      const departureShifted = departureTime.minus({ minutes: 5 })
-      this.departureTime = this.line.getClosestDeparture(departureShifted)
+      this.departureTime = this.line.getClosestDeparture(this.points[0].serviceTime)
     }
   }
 
