@@ -37,12 +37,13 @@ const getRelevantTrips = async () => {
   // Query trips that has at least one point within 120 seconds from current time
   const rows = await sql<RingRow[]>`
     SELECT *
-    FROM ring_history_clone
+    FROM ring_history
     WHERE trip_id IN (
       SELECT trip_id
-      FROM ring_history_clone
+      FROM ring_history
       WHERE service_time BETWEEN ${serviceSeconds} - 60 AND ${serviceSeconds} + 60
       AND color ${isWeekend ? sql`=` : sql`!=`} '#737373'
+      AND "timestamp" < NOW() - INTERVAL '24 hours'
     )
     ORDER BY "timestamp" ASC;
   `
