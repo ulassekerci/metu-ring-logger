@@ -43,7 +43,8 @@ export const poll = async () => {
     if (isParked) return
     const isNewTrip = detectNewTrip(newPoint, lastRows)
     const newID = generateID()
-    const tripID = isNewTrip ? newID : lastRows[0].trip_id
+    // TODO: make this cleaner
+    const tripID = isNewTrip ? newID : lastRows.find((row) => row.plate === newPoint.plate)?.trip_id || newID
     const databaseRow = newPoint.toDB(tripID)
     if (process.env.DISABLE_LOGGING) return
     await sql`INSERT INTO ring_history ${sql(databaseRow)}`
