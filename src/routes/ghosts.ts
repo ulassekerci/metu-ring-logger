@@ -45,7 +45,7 @@ const getRelevantTrips = async () => {
       AND color ${isWeekend ? sql`=` : sql`!=`} '#737373'
       AND "timestamp" < NOW() - INTERVAL '24 hours'
     )
-    ORDER BY "timestamp" ASC;
+    ORDER BY "timestamp" DESC;
   `
   const tripIDs = [...new Set(rows.map((row) => row.trip_id))]
   return tripIDs.map((tripID) => {
