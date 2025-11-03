@@ -22,18 +22,21 @@ export class RingTrip {
     this.line = ringLine
 
     // if first point is far from departure stop consider a partial trip
-    const firstPoint = this.points.at(-1)?.turfPoint!
+    const firstPoint = this.points.at(-1)
+    // TODO: handle this better
+    if (!firstPoint) throw new Error('Trip has no points')
+
     const departurePoint = this.line.departureStop.turfPoint
-    const firstPointDistance = turf.distance(firstPoint, departurePoint, { units: 'meters' })
+    const firstPointDistance = turf.distance(firstPoint.turfPoint, departurePoint, { units: 'meters' })
     if (firstPointDistance > 400) this.isPartial = true
 
     if (this.isPartial) {
       // if departure is unknown estimate departure time from its position
       // TODO: finding closest stop isn't reliable - use polyline matching
       // also look at ! thing
-      this.departureTime = this.line.estimateDeparture(this.points.at(-1)!)
+      this.departureTime = this.line.estimateDeparture(firstPoint)
     } else {
-      this.departureTime = this.line.getClosestDeparture(this.points.at(-1)!.serviceTime)
+      this.departureTime = this.line.getClosestDeparture(firstPoint.serviceTime)
     }
   }
 
