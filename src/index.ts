@@ -16,8 +16,6 @@ app.use('/', routes.live)
 app.use('/ghosts', routes.ghosts)
 app.use('/schedule', routes.schedule)
 
-process.env.ENABLE_MOCK && app.use('/mock', routes.mock)
-
 app.use(errorHandler)
 
 app.listen(port, () => {
