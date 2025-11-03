@@ -23,7 +23,6 @@ export interface RingData {
 }
 
 export interface RingRow {
-  id: number
   trip_id: string
   lat: string
   lng: string

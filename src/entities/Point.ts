@@ -1,6 +1,7 @@
 import { MetuData, RingData, RingRow } from '../interfaces/ring'
 import * as turf from '@turf/turf'
 import { ServiceTime } from './ServiceTime'
+import { Vehicle } from './Vehicle'
 
 export class RingPoint {
   lat: number
@@ -41,9 +42,10 @@ export class RingPoint {
     return new RingPoint({ ...dbPoint, serviceTime: new ServiceTime(dbPoint.service_time) })
   }
 
-  detectMovement = (oldData: RingPoint[] | null) => {
-    const oldPoint = oldData?.find((point) => point.plate === this.plate)
-    if (!oldData || !oldPoint) return true
+  detectMovement = (oldVehicles: Vehicle[] | null) => {
+    const oldPoints = oldVehicles?.map((vehicle) => vehicle.trip.points[0])
+    const oldPoint = oldPoints?.find((point) => point.plate === this.plate)
+    if (!oldPoint) return true
     const isLatUpdated = oldPoint.lat !== this.lat
     const isLngUpdated = oldPoint.lng !== this.lng
     return isLatUpdated || isLngUpdated
@@ -51,8 +53,8 @@ export class RingPoint {
 
   toDB = (tripID: string) => ({
     trip_id: tripID,
-    lat: this.lat,
-    lng: this.lng,
+    lat: String(this.lat),
+    lng: String(this.lng),
     address: this.address,
     color: this.color,
     state: this.state,
