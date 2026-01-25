@@ -20,6 +20,7 @@
     "express": "^5.1.0",
     "luxon": "^3.7.1",
     "nanoid": "^5.1.5",
+    "node-cron": "^4.2.1",
     "postgres": "^3.4.7"
   },
   "devDependencies": {

@@ -4,6 +4,7 @@ import { Settings } from 'luxon'
 import { poll } from './poller'
 import { routes } from './routes'
 import { errorHandler } from './utils/err'
+import cron from 'node-cron'
 
 const app = express()
 const port = process.env.PORT || 3000
@@ -22,6 +23,6 @@ app.listen(port, () => {
   console.log(`Running at port ${port}`)
 })
 
-setInterval(() => {
+cron.schedule('* * * * * *', () => {
   if (!process.env.DISABLE_POLLING) poll()
-}, 1000)
+})
