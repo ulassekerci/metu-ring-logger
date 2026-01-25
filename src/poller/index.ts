@@ -68,7 +68,7 @@ export const poll = async () => {
 }
 
 const detectNewTrip = (newPoint: RingPoint, trip: RingTrip) => {
-  if (trip.points[0].color !== newPoint.color) return true
+  if (trip.points.at(-1)?.color !== newPoint.color) return true
   // if no data was received for more than 3 minutes, consider it a new trip
   // to prevent ghost to be stuck at the last position if there is a big gap in data
   if (newPoint.serviceTime.diff(trip.points[0].serviceTime) > 3 * 60) return true
