@@ -7,20 +7,6 @@ export const a2Metro = new Stop({
   address: 'ODTU A2 Kapisi',
 })
 
-export const a2MetroLineString = new Stop({
-  name: 'A2 Metro LineString',
-  lat: 39.905989810992125,
-  lng: 32.766396350486026,
-  address: 'ODTU A2 Kapisi',
-})
-
-export const havacilikU = new Stop({
-  name: 'havacilik linestring',
-  lat: 39.883606332060225,
-  lng: 32.777139511254134,
-  address: 'ODTU A2 Kapisi',
-})
-
 export const kolej = new Stop({
   name: 'Kolej',
   lat: 39.904278,
@@ -68,6 +54,13 @@ export const isaOutbound = new Stop({
   lng: 32.777747,
   address: 'Isa Demiray',
 })
+
+// export const havacilikU = new Stop({
+//   name: 'havacilik linestring',
+//   lat: 39.883606332060225,
+//   lng: 32.777139511254134,
+//   address: 'ODTU A2 Kapisi',
+// })
 
 export const havacilik = new Stop({
   name: 'Uzay Havacılık',
