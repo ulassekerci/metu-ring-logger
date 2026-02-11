@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon'
+import { DateTime, Duration } from 'luxon'
 
 export class ServiceTime {
   readonly seconds: number
@@ -23,8 +23,17 @@ export class ServiceTime {
     return this.fromLuxon(luxon)
   }
 
+  get morning() {
+    return DateTime.now().minus({ seconds: this.seconds })
+  }
+
+  get isWeekend() {
+    return this.morning.isWeekend
+  }
+
   diff(other: ServiceTime) {
-    return Math.abs(this.seconds - other.seconds)
+    const diffSeconds = Math.abs(this.seconds - other.seconds)
+    return Duration.fromObject({ seconds: diffSeconds })
   }
 
   plus({ hours, minutes, seconds }: { hours?: number; minutes?: number; seconds?: number }) {
@@ -45,5 +54,9 @@ export class ServiceTime {
 
   toJSON() {
     return this.seconds
+  }
+
+  toHuman() {
+    return DateTime.fromObject({ hour: 6 }).plus({ seconds: this.seconds }).toFormat('HH:mm')
   }
 }
