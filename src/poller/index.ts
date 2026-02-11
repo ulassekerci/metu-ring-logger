@@ -1,89 +1,76 @@
 import axios from 'axios'
 import { DateTime } from 'luxon'
-import type { MetuData, RingRow } from '../interfaces/ring'
+import type { MetuData } from '../interfaces/ring'
 import { RingPoint } from '../entities/Point'
 import sql from '../utils/db'
-import { distance } from '@turf/turf'
-import { generateID } from '../utils/id'
-import * as turf from '@turf/turf'
-import { garagePolygon } from '../data/garage'
+import { booleanEqual, distance } from '@turf/turf'
 import { RingTrip } from '../entities/Trip'
-import { Vehicle } from '../entities/Vehicle'
-import { ServiceTime } from '../entities/ServiceTime'
+import { getLastTrip } from './lastTrip'
+import { liveData } from './store'
 
-export const lastPoll = {
-  data: [] as Vehicle[],
-  timestamp: DateTime.fromMillis(0),
-}
+export let lastPoll = DateTime.fromMillis(0)
 
 export const poll = async () => {
   const ringReq = await axios.get<MetuData[] | string>('https://ring.metu.edu.tr/ring.json')
-  const ringData = ringReq.data
+  const ringRes = ringReq.data
 
   // API returns empty page if there is no data
-  if (typeof ringData === 'string') {
-    lastPoll.data = []
-    lastPoll.timestamp = DateTime.now()
+  if (typeof ringRes === 'string') {
+    lastPoll = DateTime.now()
     return
   }
 
-  // Get point objects from data
-  const allPoints = ringData.map((data) => RingPoint.fromApi(data))
-  const newPoints = allPoints.filter((point) => point.detectMovement(lastPoll.data))
+  // Get point objects from data then discard unnecessary ones
+  const allPoints = ringRes.map((data) => RingPoint.fromApi(data))
+  const updatedPoints = allPoints.filter(isPointUseful)
 
   await Promise.all(
-    newPoints.map(async (newPoint) => {
-      // return if vehicle is parked
-      const isParked = turf.booleanPointInPolygon(newPoint.turfPoint, garagePolygon)
-      if (isParked) return
-
-      // get last trip from db
-      const lastTripRows = await sql<RingRow[]>`
-      SELECT * FROM ring_history
-      WHERE trip_id = (
-        SELECT trip_id from ring_history
-        WHERE plate = ${newPoint.plate}
-        ORDER BY "timestamp" DESC
-        LIMIT 1
-      )
-      ORDER BY "timestamp" DESC
-    `
-
-      const lastTrip = new RingTrip(lastTripRows[0].trip_id, lastTripRows)
-      const isNewTrip = detectNewTrip(newPoint, lastTrip)
-      const tripID = isNewTrip ? generateID() : lastTrip.id
-      const newRow = newPoint.toDB(tripID)
-      const newTrip = isNewTrip ? new RingTrip(tripID, [newRow]) : new RingTrip(tripID, [newRow, ...lastTripRows])
-      const vehicle = new Vehicle(newTrip)
-      // update lastPoll data
-      lastPoll.data = lastPoll.data.filter((v) => v.plate !== vehicle.plate)
-      lastPoll.data.push(vehicle)
+    updatedPoints.map(async (point) => {
+      const lastTrip = await getLastTrip(point.plate)
+      const isNewTrip = detectNewTrip(point, lastTrip)
+      const trip = isNewTrip ? RingTrip.new(point) : RingTrip.fromLast(lastTrip!, point)
+      // update store
+      liveData.update(trip)
+      // Log to DB
       if (process.env.DISABLE_LOGGING) return
-      await sql`INSERT INTO ring_history ${sql(newRow)}`
-    })
+      await sql`INSERT INTO ring_history ${sql(trip.lastPoint.toDB(trip.id))}`
+    }),
   )
 
-  lastPoll.timestamp = DateTime.now()
-  clearOldData()
+  lastPoll = DateTime.now()
 }
 
-const detectNewTrip = (newPoint: RingPoint, trip: RingTrip) => {
-  if (trip.points.at(-1)?.color !== newPoint.color) return true
-  // if no data was received for more than 3 minutes, consider it a new trip
-  // to prevent ghost to be stuck at the last position if there is a big gap in data
-  if (newPoint.serviceTime.diff(trip.points[0].serviceTime) > 3 * 60) return true
-  const departurePoint = trip.line.sections[0].stops[0].stop
-  if (!departurePoint) return true
-  const lastPointDistance = distance(departurePoint.turfPoint, trip.points[0].turfPoint, { units: 'meters' })
-  const newPointDistance = distance(departurePoint.turfPoint, newPoint.turfPoint, { units: 'meters' })
-  if (lastPointDistance < 100 && newPointDistance > 100) return true
+const detectNewTrip = (newPoint: RingPoint, trip: RingTrip | null) => {
+  if (!trip) return true
+
+  // new trip if color changes
+  const isDifferentLine = !trip.line.colors.includes(newPoint.color)
+  if (isDifferentLine) return true
+
+  // new trip if no data was received for 6 minutes
+  const oldPoint = trip.lastPoint
+  const oldPointAge = newPoint.serviceTime.diff(oldPoint.serviceTime)
+  if (oldPointAge.as('minutes') > 6) return true
+
+  // new trip when new point is farther than 100m from departure
+  const departurePoint = trip.line.departureStop.turfPoint
+  const lastPointDistance = distance(departurePoint, oldPoint.turfPoint, { units: 'meters' })
+  const newPointDistance = distance(departurePoint, newPoint.turfPoint, { units: 'meters' })
+  if (lastPointDistance <= 100 && newPointDistance > 100) return true
+
   return false
 }
 
-const clearOldData = () => {
-  const threshold = ServiceTime.now().minus({ seconds: 10 })
-  lastPoll.data = lastPoll.data.filter((vehicle) => {
-    const lastPoint = vehicle.trip.points[0]
-    return lastPoint.serviceTime.diff(threshold) > 0
-  })
+const isPointUseful = (newPoint: RingPoint) => {
+  // if it's just appeared
+  const prevTrip = liveData.findByPlate(newPoint.plate)
+  if (!prevTrip) return true
+  // if the vehicle has moved
+  const prevPoint = prevTrip.lastPoint
+  const isEqual = booleanEqual(prevPoint.turfPoint, newPoint.turfPoint)
+  if (!isEqual) return true
+  // if it's been 30secs after last record
+  const timeDiff = newPoint.serviceTime.diff(prevPoint.serviceTime)
+  if (timeDiff.as('seconds') > 30) return true
+  return false
 }
