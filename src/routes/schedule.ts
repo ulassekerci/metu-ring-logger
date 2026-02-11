@@ -4,15 +4,13 @@ import { ringLines } from '../data/lines'
 const app = Router()
 
 app.get('/', async (req: Request, res: Response) => {
-  return res.json(
-    ringLines.flatMap((line) => {
-      return line.departures.map((departure) => ({
-        colors: line.colors,
-        time: departure,
-        weekend: line.weekend,
-      }))
-    })
-  )
+  const schedule = ringLines.map((line) => ({
+    name: line.name,
+    departures: line.departures,
+    weekend: line.weekend,
+    colors: line.colors,
+  }))
+  return res.json(schedule)
 })
 
 export default app
