@@ -85,7 +85,7 @@ export class RingTrip {
       id: this.id,
       line: this.line.name,
       color: this.lastPoint.color,
-      vehicle: this.vehicle.plate,
+      vehicle: this.vehicle,
       departureTime: this.departureTime,
       closestPointToNow: this.closestPointToNow,
       isPartial: this.isPartial,
