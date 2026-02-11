@@ -1,15 +1,14 @@
 import { MetuData, RingData, RingRow } from '../interfaces/ring'
 import * as turf from '@turf/turf'
 import { ServiceTime } from './ServiceTime'
-import { Vehicle } from './Vehicle'
 
 export class RingPoint {
   lat: number
   lng: number
-  address: string
   color: string
   state: string
   plate: string
+  address?: string
   serviceTime: ServiceTime
 
   private constructor(data: RingData) {
@@ -20,10 +19,6 @@ export class RingPoint {
     this.state = data.state
     this.plate = data.plate
     this.serviceTime = data.serviceTime
-  }
-
-  get turfPoint() {
-    return turf.point([this.lng, this.lat])
   }
 
   static fromApi(metuPoint: MetuData) {
@@ -42,13 +37,8 @@ export class RingPoint {
     return new RingPoint({ ...dbPoint, serviceTime: new ServiceTime(dbPoint.service_time) })
   }
 
-  detectMovement = (oldVehicles: Vehicle[] | null) => {
-    const oldPoints = oldVehicles?.map((vehicle) => vehicle.trip.points[0])
-    const oldPoint = oldPoints?.find((point) => point.plate === this.plate)
-    if (!oldPoint) return true
-    const isLatUpdated = oldPoint.lat !== this.lat
-    const isLngUpdated = oldPoint.lng !== this.lng
-    return isLatUpdated || isLngUpdated
+  get turfPoint() {
+    return turf.point([this.lng, this.lat])
   }
 
   toDB = (tripID: string) => ({
