@@ -36,12 +36,10 @@ const getRelevantTrips = async () => {
     )
     ORDER BY "timestamp" DESC;
   `
-  const after = performance.now()
+  const afterQuery = performance.now()
 
   const tripIDs = new Set<string>()
   rows.forEach((row) => tripIDs.add(row.trip_id))
-
-  const beforeGrouping = performance.now()
 
   const trips = [...tripIDs].map((tripID) => {
     const tripRows = rows.filter((row) => row.trip_id === tripID)
@@ -49,14 +47,17 @@ const getRelevantTrips = async () => {
     return new RingTrip(tripID, tripPoints)
   })
 
-  console.log(`
-    Query took ${Math.round(after - before)} ms
-    Getting tripIDs in a set took ${beforeGrouping - after} ms
-    Grouping trips took ${performance.now() - beforeGrouping} ms
-    `)
+  const afterGrouping = performance.now()
 
   const usableTrips = trips.filter((trip) => !trip.isPartial)
   usableTrips.forEach((trip) => trip.estimateProgress())
+
+  console.log(`
+    Query took ${Math.round(afterQuery - before)} ms
+    Grouping trips took ${Math.round(afterGrouping - afterQuery)} ms
+    Progress estimation took ${Math.round(performance.now() - afterGrouping)} ms
+    `)
+
   return usableTrips
 }
 
