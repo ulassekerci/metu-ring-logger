@@ -17,7 +17,6 @@ const getRelevantTrips = async () => {
   const serviceSeconds = serviceTime.seconds
   const isWeekend = serviceTime.isWeekend
 
-  const before = performance.now()
   const rows = await sql<RingRow[]>`
     SELECT *
     FROM ring_history
@@ -36,7 +35,6 @@ const getRelevantTrips = async () => {
     )
     ORDER BY "timestamp" DESC;
   `
-  const afterQuery = performance.now()
 
   const tripIDs = new Set<string>()
   rows.forEach((row) => tripIDs.add(row.trip_id))
@@ -47,16 +45,8 @@ const getRelevantTrips = async () => {
     return new RingTrip(tripID, tripPoints)
   })
 
-  const afterGrouping = performance.now()
-
   const usableTrips = trips.filter((trip) => !trip.isPartial)
   usableTrips.forEach((trip) => trip.estimateProgress())
-
-  console.log(`
-    Query took ${Math.round(afterQuery - before)} ms
-    Grouping trips took ${Math.round(afterGrouping - afterQuery)} ms
-    Progress estimation took ${Math.round(performance.now() - afterGrouping)} ms
-    `)
 
   return usableTrips
 }
