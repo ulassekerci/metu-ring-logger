@@ -4,11 +4,31 @@ import { RingRow } from '../interfaces/ring'
 import { RingTrip } from '../entities/Trip'
 import { ServiceTime } from '../entities/ServiceTime'
 import { RingPoint } from '../entities/Point'
+import { DateTime } from 'luxon'
 
 const app = Router()
 
+const cache = {
+  data: [] as RingTrip[],
+  timestamp: DateTime.fromMillis(0),
+  checkCache: () => {
+    const now = DateTime.now()
+    const lastCache = cache.timestamp
+    if (now.diff(lastCache).as('seconds') > 1) return false
+    return true
+  },
+  updateCache: (trips: RingTrip[]) => {
+    cache.data = trips
+    cache.timestamp = DateTime.now()
+  },
+}
+
 app.get('/', async (req: Request, res: Response) => {
+  const isCacheFresh = cache.checkCache()
+  if (isCacheFresh) return res.json(cache.data)
+
   const trips = await getRelevantTrips()
+  cache.updateCache(trips)
   return res.json(trips)
 })
 
