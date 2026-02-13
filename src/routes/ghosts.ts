@@ -16,8 +16,8 @@ const getRelevantTrips = async () => {
   const serviceTime = ServiceTime.now()
   const serviceSeconds = serviceTime.seconds
   const isWeekend = serviceTime.isWeekend
-  const serviceMorning = serviceTime.morning
 
+  const before = performance.now()
   const rows = await sql<RingRow[]>`
     SELECT *
     FROM ring_history
@@ -28,13 +28,20 @@ const getRelevantTrips = async () => {
         BETWEEN ${serviceSeconds} - 60
         AND ${serviceSeconds} + 60
       AND color ${isWeekend ? sql`=` : sql`!=`} '#737373'
-      AND "timestamp" < ${serviceMorning.toJSDate()}
+      AND "timestamp" < (
+        SELECT (value #>> '{}')::timestamptz
+        FROM stats
+        WHERE key = 'last_cleanup'
+      )
     )
     ORDER BY "timestamp" DESC;
   `
+  const after = performance.now()
 
   const tripIDs = new Set<string>()
   rows.forEach((row) => tripIDs.add(row.trip_id))
+
+  const beforeGrouping = performance.now()
 
   const trips = [...tripIDs].map((tripID) => {
     const tripRows = rows.filter((row) => row.trip_id === tripID)
@@ -42,7 +49,15 @@ const getRelevantTrips = async () => {
     return new RingTrip(tripID, tripPoints)
   })
 
-  return trips.filter((trip) => !trip.isPartial)
+  console.log(`
+    Query took ${Math.round(after - before)} ms
+    Getting tripIDs in a set took ${beforeGrouping - after} ms
+    Grouping trips took ${performance.now() - beforeGrouping} ms
+    `)
+
+  const usableTrips = trips.filter((trip) => !trip.isPartial)
+  usableTrips.forEach((trip) => trip.estimateProgress())
+  return usableTrips
 }
 
 export default app

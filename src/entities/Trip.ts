@@ -6,6 +6,7 @@ import { ServiceTime } from './ServiceTime'
 import { generateID } from '../utils/id'
 import { Duration } from 'luxon'
 import { Vehicle } from './Vehicle'
+import { fast100mCheck } from '../utils/fast100m'
 
 export class RingTrip {
   id: string
@@ -18,7 +19,14 @@ export class RingTrip {
   constructor(id: string, points: RingPoint[]) {
     if (points.length === 0) throw new RingTripError('no_rows')
 
-    const ringLine = ringLines.find((line) => line.colors.includes(points[0].color.toUpperCase()))
+    const ringLine = ringLines.find((line) => {
+      const tripColor = points[0].color.toUpperCase()
+      const lineEnd = line.endTime
+      const now = ServiceTime.now()
+      if (!line.colors.includes(tripColor)) return
+      if (lineEnd && now.seconds > lineEnd.seconds) return
+      return true
+    })
     if (!ringLine) throw new RingTripError('line_not_found')
 
     const isSameVehicle = points.some((point) => point.plate !== points[0].plate)
@@ -65,6 +73,10 @@ export class RingTrip {
     return this.points[0]
   }
 
+  get pointsAsc() {
+    return [...this.points].reverse()
+  }
+
   get duration() {
     const first = this.firstPoint.serviceTime.seconds
     const last = this.lastPoint.serviceTime.seconds
@@ -77,6 +89,34 @@ export class RingTrip {
       const prevDiff = prev.serviceTime.diff(now)
       const currDiff = curr.serviceTime.diff(now)
       return currDiff < prevDiff ? curr : prev
+    })
+  }
+
+  estimateProgress() {
+    if (this.isPartial) return
+    const points = this.pointsAsc
+    const stops = this.line.stops
+
+    points.forEach((point, pointIndex) => {
+      // first point is always the departure
+      if (pointIndex === 0) return (point.stopIndex = 0)
+
+      const prevPoint = points[pointIndex - 1]
+      const lastStopIndex = prevPoint?.stopIndex ?? 0
+
+      // check last stop and next 3 stops for a match with the point
+      for (let i = lastStopIndex; i < Math.min(stops.length, lastStopIndex + 4); i++) {
+        // check if stop is close
+        const stop = stops[i]
+        const isStopFar = !fast100mCheck(stop.turfPoint, point.turfPoint)
+        if (isStopFar) continue
+        // set stop to point
+        point.stopIndex = i
+        break
+      }
+
+      // if no stop is matched keep previous stop
+      if (point.stopIndex === null) point.stopIndex = prevPoint?.stopIndex
     })
   }
 

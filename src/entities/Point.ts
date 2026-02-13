@@ -8,8 +8,9 @@ export class RingPoint {
   color: string
   state: string
   plate: string
-  address?: string
+  address: string
   serviceTime: ServiceTime
+  stopIndex: number | null
 
   private constructor(data: RingData) {
     this.lat = Number(data.lat)
@@ -19,6 +20,7 @@ export class RingPoint {
     this.state = data.state
     this.plate = data.plate
     this.serviceTime = data.serviceTime
+    this.stopIndex = null
   }
 
   static fromApi(metuPoint: MetuData) {
@@ -34,11 +36,18 @@ export class RingPoint {
   }
 
   static fromDb(dbPoint: RingRow) {
-    return new RingPoint({ ...dbPoint, serviceTime: new ServiceTime(dbPoint.service_time) })
+    return new RingPoint({
+      ...dbPoint,
+      serviceTime: new ServiceTime(dbPoint.service_time),
+    })
   }
 
   get turfPoint() {
     return turf.point([this.lng, this.lat])
+  }
+
+  setProgress(index: number) {
+    this.stopIndex = index
   }
 
   toDB = (tripID: string) => ({
