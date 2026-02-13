@@ -3,7 +3,7 @@ import { ServiceTime } from '../entities/ServiceTime'
 export interface MetuData {
   lat: string // latitude
   lng: string // longitude
-  addr?: string // address
+  addr: string // address
   dir: number // direction (0-8, one per 45 degrees)
   sp: string // speed kmh
   clr: string // color
@@ -15,10 +15,10 @@ export interface MetuData {
 export interface RingData {
   lat: string
   lng: string
-  address?: string
   color: string
   state: string
   plate: string
+  address: string
   serviceTime: ServiceTime
 }
 
@@ -26,10 +26,10 @@ export interface RingRow {
   trip_id: string
   lat: string
   lng: string
-  address?: string
   color: string
   state: string
   plate: string
+  address: string
   service_time: number // seconds after 06.00
   timestamp: string // ISO string
 }
