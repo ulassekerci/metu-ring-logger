@@ -84,8 +84,8 @@ export class RingTrip {
   }
 
   get closestPointToNow() {
+    const now = ServiceTime.now()
     return this.points.reduce((prev, curr) => {
-      const now = ServiceTime.now()
       const prevDiff = prev.serviceTime.diff(now)
       const currDiff = curr.serviceTime.diff(now)
       return currDiff < prevDiff ? curr : prev
