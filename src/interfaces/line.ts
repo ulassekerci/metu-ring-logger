@@ -1,11 +1,12 @@
 import { Feature, LineString } from 'geojson'
-import { Stop } from '../entities/Stop'
+import { ServiceTime } from '../entities/ServiceTime'
 
 export interface Route {
   name: string
   departures: string[] // HH:mm format
   weekend: boolean
   sections: RouteSection[]
+  endTime?: ServiceTime
 }
 
 export interface RouteSection {
@@ -13,4 +14,11 @@ export interface RouteSection {
   color: string
   polyline: Feature<LineString>
   stops: { stop: Stop; mins: number }[]
+}
+
+interface Stop {
+  name: string
+  lat: number
+  lng: number
+  address?: string
 }

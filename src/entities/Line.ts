@@ -3,6 +3,8 @@ import { mergeSections } from '../data/lines/merge'
 import { Route, RouteSection } from '../interfaces/line'
 import { RingPoint } from './Point'
 import { Duration } from 'luxon'
+import { Stop } from './Stop'
+import { booleanEqual } from '@turf/turf'
 
 export class RingLine {
   name: string
@@ -10,6 +12,7 @@ export class RingLine {
   weekend: boolean
   sections: RouteSection[]
   colors: string[]
+  endTime?: ServiceTime
 
   constructor(route: Route) {
     this.name = route.name
@@ -17,10 +20,20 @@ export class RingLine {
     this.sections = route.sections
     this.colors = route.sections.map((section) => section.color.toUpperCase())
     this.departures = route.departures.map((d) => ServiceTime.fromFormat(d, 'HH:mm'))
+    this.endTime = route.endTime
   }
 
   get stops() {
-    return this.sections.flatMap((section) => section.stops)
+    const stopData = this.sections.flatMap((section) => section.stops)
+    const allStops = stopData.map((s) => new Stop({ ...s.stop, mins: s.mins }))
+    // deduplicate consecutive same stops
+    return allStops.filter((newStop, index) => {
+      if (index === 0) return true
+      const prevStop = allStops[index - 1]
+      const isSameStop = booleanEqual(newStop.turfPoint, prevStop.turfPoint)
+      if (isSameStop) return false
+      return true
+    })
   }
 
   get duration() {
@@ -30,7 +43,8 @@ export class RingLine {
   }
 
   get departureStop() {
-    return this.sections[0].stops[0].stop
+    const data = this.sections[0].stops[0]
+    return new Stop({ ...data.stop, mins: data.mins })
   }
 
   get polyLine() {
@@ -47,9 +61,9 @@ export class RingLine {
 
   estimateDeparture(points: RingPoint[]) {
     const uniqueStops = this.stops.filter((stop) => {
-      const stopAdress = stop.stop.address
+      const stopAdress = stop.address
       if (!stopAdress) return
-      const sameAdress = this.stops.filter((s) => s.stop.address === stopAdress)
+      const sameAdress = this.stops.filter((s) => s.address === stopAdress)
       if (sameAdress.length > 1) return false
       else return true
     })
@@ -57,12 +71,12 @@ export class RingLine {
     const firstPointWithUniqueAddress = [...points].reverse().find((point) => {
       const pointAddress = point.address
       if (!pointAddress) return false
-      const isUnique = uniqueStops.some((stop) => stop.stop.address === pointAddress)
+      const isUnique = uniqueStops.some((stop) => stop.address === pointAddress)
       return isUnique
     })
     if (!firstPointWithUniqueAddress) return null
 
-    const stop = this.stops.find((s) => s.stop.address === firstPointWithUniqueAddress.address)
+    const stop = this.stops.find((s) => s.address === firstPointWithUniqueAddress.address)
     if (!stop) return null
 
     const departureTime = firstPointWithUniqueAddress.serviceTime.minus({ minutes: stop.mins })

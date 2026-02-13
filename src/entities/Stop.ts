@@ -4,16 +4,18 @@ export class Stop {
   name: string
   lat: number
   lng: number
+  mins: number
   address?: string // address string from metu api
 
   get turfPoint() {
     return turf.point([this.lng, this.lat])
   }
 
-  constructor(info: { name: string; lat: number; lng: number; address?: string }) {
-    this.name = info.name
-    this.lat = info.lat
-    this.lng = info.lng
-    this.address = info.address
+  constructor(data: { name: string; lat: number; lng: number; address?: string; mins: number }) {
+    this.name = data.name
+    this.lat = data.lat
+    this.lng = data.lng
+    this.mins = data.mins
+    this.address = data.address
   }
 }
