@@ -7,6 +7,8 @@ import { generateID } from '../utils/id'
 import { Duration } from 'luxon'
 import { Vehicle } from './Vehicle'
 import { fast100mCheck } from '../utils/fast100m'
+import { getDistanceTraveled } from '../routes/ghosts/progress'
+import { checkBounds } from '../data/campus'
 
 export class RingTrip {
   id: string
@@ -15,6 +17,7 @@ export class RingTrip {
   vehicle: Vehicle
   departureTime: ServiceTime | null
   isPartial: boolean = false
+  isParked: boolean = false
 
   constructor(id: string, points: RingPoint[]) {
     if (points.length === 0) throw new RingTripError('no_rows')
@@ -38,6 +41,11 @@ export class RingTrip {
     this.line = ringLine
     this.vehicle = new Vehicle(points[0].plate)
     this.points = points.sort((a, b) => b.serviceTime.seconds - a.serviceTime.seconds)
+
+    // parked if last 3 points in the garage
+    const last3Points = this.points.slice(0, 3)
+    const bounds = last3Points.map((p) => checkBounds(p))
+    if (bounds.every(Boolean)) this.isParked = true
 
     // if first point is far from departure count as a partial trip and display
     // estimated departure with a warning
@@ -85,11 +93,15 @@ export class RingTrip {
 
   get closestPointToNow() {
     const now = ServiceTime.now()
-    return this.points.reduce((prev, curr) => {
+    const point = this.points.reduce((prev, curr) => {
       const prevDiff = prev.serviceTime.diff(now)
       const currDiff = curr.serviceTime.diff(now)
       return currDiff < prevDiff ? curr : prev
     })
+    return {
+      ...point,
+      distanceTraveled: getDistanceTraveled(point, this.line),
+    }
   }
 
   estimateProgress() {
@@ -116,7 +128,9 @@ export class RingTrip {
       }
 
       // if no stop is matched keep previous stop
-      if (point.stopIndex === null) point.stopIndex = prevPoint?.stopIndex
+      if (point.stopIndex === null) {
+        point.stopIndex = prevPoint?.stopIndex
+      }
     })
   }
 
