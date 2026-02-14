@@ -55,7 +55,7 @@ export class RingTrip {
 
     if (firstPointToDeparture > 500) {
       this.isPartial = true
-      const estimatedDeparture = this.line.estimateDeparture(this.points)
+      const estimatedDeparture = this.line.estimateDeparture(this)
       this.departureTime = estimatedDeparture
     } else {
       const closestDeparture = this.line.getClosestDeparture(this.firstPoint.serviceTime)

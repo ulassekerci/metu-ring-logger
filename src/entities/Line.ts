@@ -1,10 +1,10 @@
 import { ServiceTime } from './ServiceTime'
 import { mergeSections } from '../data/lines/merge'
 import { Route, RouteSection } from '../interfaces/line'
-import { RingPoint } from './Point'
 import { Duration } from 'luxon'
 import { Stop } from './Stop'
 import { booleanEqual } from '@turf/turf'
+import { RingTrip } from './Trip'
 
 export class RingLine {
   name: string
@@ -59,27 +59,59 @@ export class RingLine {
     })
   }
 
-  estimateDeparture(points: RingPoint[]) {
-    const uniqueStops = this.stops.filter((stop) => {
-      const stopAdress = stop.address
-      if (!stopAdress) return
-      const sameAdress = this.stops.filter((s) => s.address === stopAdress)
-      if (sameAdress.length > 1) return false
-      else return true
-    })
+  estimateDeparture(trip: RingTrip) {
+    // Use advantage of rings that have only one vehicle at a time
+    // for example a live gray ring at 15.05 must be the one departed at 14.30
+    const lineDuration = this.stops.at(-1)!.mins
+    const minDepartureInterval = this.departures.reduce((acc, curr, currIdx, arr) => {
+      if (currIdx === 0) return acc
+      const currDiff = curr.diff(arr[currIdx - 1]).as('minutes')
+      return Math.min(currDiff, acc)
+    }, Infinity)
+    const isSingleVehicleLine = minDepartureInterval > lineDuration
 
-    const firstPointWithUniqueAddress = [...points].reverse().find((point) => {
-      const pointAddress = point.address
-      if (!pointAddress) return false
-      const isUnique = uniqueStops.some((stop) => stop.address === pointAddress)
-      return isUnique
-    })
-    if (!firstPointWithUniqueAddress) return null
+    if (isSingleVehicleLine) {
+      // return departure time just before now
+      const now = ServiceTime.now()
+      const pastDepartures = this.departures.filter((d) => d.seconds <= now.seconds)
+      if (pastDepartures.length === 0) return null
+      return pastDepartures.reduce((prev, curr) => (curr.seconds > prev.seconds ? curr : prev))
+    }
 
-    const stop = this.stops.find((s) => s.address === firstPointWithUniqueAddress.address)
-    if (!stop) return null
+    // If that didn't work, try finding distinct adresses
+    // loop through all the colors starting from first point
+    // check if there are any points with distinct address
+    const tripColors = new Set<string>()
+    trip.pointsAsc.forEach((point) => tripColors.add(point.color))
 
-    const departureTime = firstPointWithUniqueAddress.serviceTime.minus({ minutes: stop.mins })
-    return this.getClosestDeparture(departureTime)
+    for (const tripColor of tripColors) {
+      const possibleSections = this.sections.filter((sec) => sec.color === tripColor)
+      // find distinct addresses in the sections
+      const addresses = new Map<string, { mins: number; isDistinct: boolean }>()
+      possibleSections.forEach((sec) => {
+        sec.stops.forEach((stop) => {
+          const address = stop.stop.address
+          const mins = stop.mins
+          if (!address) return
+          if (addresses.has(address)) return addresses.set(address, { mins, isDistinct: false })
+          addresses.set(address, { mins, isDistinct: true })
+        })
+      })
+
+      // use distinct addresses to determine departure
+      const points = trip.pointsAsc.filter((p) => p.color === tripColor)
+
+      const firstPointWithDistinctAddress = points.find((point) => {
+        return addresses.get(point.address)?.isDistinct
+      })
+      if (!firstPointWithDistinctAddress) continue
+
+      const stopMins = addresses.get(firstPointWithDistinctAddress.address)?.mins
+      if (stopMins == null) continue
+
+      const estimatedDeparture = firstPointWithDistinctAddress.serviceTime.minus({ minutes: stopMins })
+      return this.getClosestDeparture(estimatedDeparture)
+    }
+    return null
   }
 }
